@@ -1,0 +1,47 @@
+$ cat .gitignore
+# exclude
+.DS_Store
+.idea
+*.log
+*.pyc
+*.pyo
+logs/*.log
+logs/*.log.*
+*.iml
+__pycache__/
+
+face_detect_log/*
+
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# C extensions
+*.so
+
+# Distribution / packaging
+bin/
+build/
+develop-eggs/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Django stuff:
+*.log
+*.po
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Visual Studio
+.vscode

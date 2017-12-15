@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>test stand alone web socket connection</title>
+  </head>
+  <body>
+    <div id="displayEventsElement"></div>
+    
+    <script src="websocketClient.js" type="text/javascript"></script>
+    <script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"></script>
+    <!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script> -->
+    <script>
+        $(document).ready(function() {
+            var _displayEventsElement = $('#displayEventsElement');
+
+            var websocketClient = new WebsocketClient("127.0.0.1",13254);
+
+            websocketClient.on("message",function(eventData){
+                _displayEventsElement.append(JSON.stringify(eventData));
+            });
+        });
+    </script>
+</body>
+</html>
