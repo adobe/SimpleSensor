@@ -8,9 +8,38 @@ import json
 from threadsafeLogger import ThreadsafeLogger
 
 def load(loggingQueue):
+    """ Load module specific config into dictionary, return it"""    
     logger = ThreadsafeLogger(loggingQueue, "CamCollectionPoint")
     thisConfig = {}
     configParser = configparser.ConfigParser()
+
+    thisConfig = loadSecrets(thisConfig, logger, configParser)
+    thisConfig = loadModule(thisConfig, logger, configParser)
+    return thisConfig
+
+def loadSecrets(thisConfig, logger, configParser):
+    """ Load module specific secrets """
+    try:
+        with open("/secrets.conf") as f:
+            configParser.readfp(f)
+    except IOError:
+        configParser.read(os.path.join(os.path.dirname(__file__),"config/secrets.conf"))
+        exit
+
+    thisConfig['Azure'] = {}
+
+    """azure subscription key"""
+    try:
+        configValue=configParser.get('Secrets','azure_subscription_key')
+    except:
+        configValue = ""
+    logger.info("Azure subscription key : %s" % configValue)
+    thisConfig['Azure']['SubscriptionKey'] = configValue
+
+    return thisConfig
+
+def loadModule(thisConfig, logger, configParser):
+    """ Load module config """
     try:
         with open("/collectionPoint.conf") as f:
             configParser.readfp(f)
@@ -202,16 +231,6 @@ def load(loggingQueue):
 
 
     '''AZURE CONFIG '''
-
-    thisConfig['Azure'] = {}
-
-    """azure subscription key"""
-    try:
-        configValue=configParser.get('Azure','subscription_key')
-    except:
-        configValue = ""
-    logger.info("Azure subscription key : %s" % configValue)
-    thisConfig['Azure']['SubscriptionKey'] = configValue
 
     """uri base"""
     try:

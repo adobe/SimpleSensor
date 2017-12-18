@@ -16,7 +16,7 @@ from threading import Thread
 import io, base64
 from PIL import Image
 from multiTracker import MultiTracker
-import configLoader
+import camConfigLoader
 from azureImagePrediction import AzureImagePrediction
 
 class CamCollectionPoint(Thread):
@@ -43,7 +43,7 @@ class CamCollectionPoint(Thread):
         self.alive = True
 
         # Configs
-        self.moduleConfig = configLoader.load(self.loggingQueue) #Get the config for this module
+        self.moduleConfig = camConfigLoader.load(self.loggingQueue) #Get the config for this module
         self.config = baseConfig
 
         # Prediction engine

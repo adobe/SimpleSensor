@@ -3,14 +3,14 @@ import sys
 import os
 import inspect
 from websocketServer import CecIotWebsocketServer
-from azureIotHub import AzureIotHubConnectionThread
+# from azureIotHub import AzureIotHubConnectionThread
 from collectionPointEvent import CollectionPointEvent
 import time
 from loggingEngine import LoggingEngine
 from threadsafeLogger import ThreadsafeLogger
 from cv2 import waitKey
 import msvcrt
-import configNormalizer
+import configLoader
 from mqtt import MQTTClient
 
 # List of threads to handle
@@ -18,7 +18,7 @@ threads = []
 
 # Logging queue setup
 loggingQueue = mp.Queue()
-logger = ThreadsafeLogger(loggingQueue,"main")
+logger = ThreadsafeLogger(loggingQueue, "main")
 
 # Logging output engine
 loggingEngine = LoggingEngine(loggingQueue=loggingQueue)
@@ -26,7 +26,7 @@ threads.append(loggingEngine)
 loggingEngine.start()
 
 # Config
-baseConfig = configNormalizer.loadConfig(logger)
+baseConfig = configLoader.load(logger)
 
 # Add collection point modules to path
 for module in baseConfig['Modules']:

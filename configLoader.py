@@ -9,16 +9,51 @@ import json
 baseConfig = {}
 configParser = configparser.ConfigParser()
 configFilePath = None
-try:
-    with open("/base.conf") as f:
-        configParser.readfp(f)
-        configFilePath = "/base.conf"
-except IOError:
-    configParser.read(os.path.join(os.path.dirname(__file__),"config/base.conf"))
-    configFilePath = os.path.join(os.path.dirname(__file__),"config/base.conf")
-    exit
 
-def loadConfig(logger):
+def load(logger):
+    """ Build dictionary of config values, return it """
+    loadBase(logger)
+    loadSecrets(logger)
+    return baseConfig
+
+def loadSecrets(logger):
+    """ Load secrets.conf into baseConfig"""
+    try:
+        with open("/secrets.conf") as f:
+            configParser.readfp(f)
+            configFilePath = "/secrets.conf"
+    except IOError:
+        configParser.read(os.path.join(os.path.dirname(__file__),"config/secrets.conf"))
+        configFilePath = os.path.join(os.path.dirname(__file__),"config/secrets.conf")
+        exit
+
+    """ Azure connection string """
+    try:
+        AZURE_CONNECTION_STRING=configParser.get('Secrets','azure_connection_string')
+    except:
+        AZURE_CONNECTION_STRING = None
+    baseConfig['AzureConnectionString'] = AZURE_CONNECTION_STRING
+    if baseConfig['UseAzure']:
+        logger.info("Azure Connection String : %s" % baseConfig['AzureConnectionString'])
+
+    """ MQTT key """
+    try:
+        val=configParser.get('Secrets','mqtt_key')
+    except:
+        val = 'FakeKey'
+    baseConfig['MqttKey'] = val
+    logger.info("MQTT key : %s" % baseConfig['MqttKey'])
+
+def loadBase(logger):
+    """ Load base.conf into baseConfig"""
+    try:
+        with open("/base.conf") as f:
+            configParser.readfp(f)
+            configFilePath = "/base.conf"
+    except IOError:
+        configParser.read(os.path.join(os.path.dirname(__file__),"config/base.conf"))
+        configFilePath = os.path.join(os.path.dirname(__file__),"config/base.conf")
+        exit
 
     """collection point id"""
     try:
@@ -90,14 +125,6 @@ def loadConfig(logger):
     logger.info("Use Azure : %s" % baseConfig['UseAzure'])
 
     try:
-        AZURE_CONNECTION_STRING=configParser.get('BaseConfig','azure_connection_string')
-    except:
-        AZURE_CONNECTION_STRING = None
-    baseConfig['AzureConnectionString'] = AZURE_CONNECTION_STRING
-    if baseConfig['UseAzure']:
-        logger.info("Azure Connection String : %s" % baseConfig['AzureConnectionString'])
-
-    try:
         AZURE_MESSAGE_TIMEOUT=configParser.getint('BaseConfig','azure_message_timeout')
     except:
         AZURE_MESSAGE_TIMEOUT = 10000
@@ -150,13 +177,6 @@ def loadConfig(logger):
         val = 9999
     baseConfig['MqttPort'] = val
     logger.info("MQTT port : %s" % baseConfig['MqttPort'])
-
-    try:
-        val=configParser.get('BaseConfig','mqtt_key')
-    except:
-        val = 'FakeKey'
-    baseConfig['MqttKey'] = val
-    logger.info("MQTT key : %s" % baseConfig['MqttKey'])
 
     try:
         val=configParser.get('BaseConfig','mqtt_username')

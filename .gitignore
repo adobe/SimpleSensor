@@ -8,7 +8,9 @@ $ cat .gitignore
 logs/*.log
 logs/*.log.*
 *.iml
-__pycache__/
+
+secrets.conf
+config/secrets.conf
 
 face_detect_log/*
 
