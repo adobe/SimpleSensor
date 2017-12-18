@@ -14,6 +14,7 @@ from idsWrapper import IdsWrapper
 from threadsafeLogger import ThreadsafeLogger
 from threading import Thread
 import io, base64
+import os
 from PIL import Image
 from multiTracker import MultiTracker
 import camConfigLoader
@@ -88,7 +89,9 @@ class CamCollectionPoint(Thread):
         self.initializeCamera()
 
         # Load the OpenCV Haar classifier to detect faces
-        faceCascade = cv2.CascadeClassifier('./classifiers/haarcascades/haarcascade_frontalface_default.xml')
+        curdir = os.path.dirname(__file__)
+        cascadePath = os.path.join(curdir, 'classifiers','haarcascades','haarcascade_frontalface_default.xml')
+        faceCascade = cv2.CascadeClassifier(cascadePath)
 
         self.mmTracker = MultiTracker("KCF", self.moduleConfig, self.loggingQueue)
 

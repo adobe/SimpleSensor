@@ -1,9 +1,6 @@
 import multiprocessing as mp
 import sys
-import os
-import inspect
 from importlib import import_module
-# from websocketServer import CecIotWebsocketServer
 from collectionPointEvent import CollectionPointEvent
 import time
 from loggingEngine import LoggingEngine
@@ -11,7 +8,6 @@ from threadsafeLogger import ThreadsafeLogger
 from cv2 import waitKey
 import msvcrt
 import configLoader
-# from mqtt import MQTTClient
 
 # List of threads to handle
 threads = []
@@ -73,7 +69,7 @@ def sendOutboundEventMessage(msg):
     Always send string messages, as they are control messages like 'shutdown'.
     """
 
-    #TODO: Make communication channels modular, define local channels
+    #TODO: Define local channels
 
     for moduleName in _communicationModuleNames:
         if type(msg) is str or not msg.localOnly:
@@ -155,7 +151,7 @@ def shutdown():
     """
 
     logger.info("Shutting down main process")
-    
+
     # Send to communication methods
     sendOutboundEventMessage("SHUTDOWN")
 
