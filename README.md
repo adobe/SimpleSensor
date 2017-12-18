@@ -34,7 +34,7 @@ The application is broken down into the following domains
 
 For examples on how to use these domains, including things you can do with a collection point, an Adobe AEM client, AEM Screens, or plain old Javascipt, see the [Examples](#examples "Examples") section.
 
-For printable camera enclosures, see the [enclosures subdirectory](./enclosures), and feel free to contribute your own!
+For printable camera enclosures, see the [enclosures subdirectory](./other/enclosures), and feel free to contribute your own!
 
 #### Communication Channels
 Today we have two communications channels built into the platform.  We will add more over time.
@@ -52,20 +52,21 @@ CollectionPointEvent |||
 `topic`| String | Label of the event, ie `Detected` or `PowerOn`
 `eventTime`| ISO 8601 String | Time stamp of when the message was created
 `extendedData` | Dictionary | Key/value pairs of any extra data the sensor needs to emit
-`localOnly` | Boolean | Whether or not to broadcast the event on low-cost channels only
+`localOnly` | Boolean | Whether or not to broadcast the event on low-cost channels only (placeholder, keep `False` for now)
   
 
 ##### TO DO
 - Greater platform support (stable Linux and macOS installation instructions)
 - Wider range of sensors (taking suggestions, open an [issue!](#contributing "contributing"))
 - Greater camera support
+- Handle `localOnly` flags
 - Target detection zone - specify where in camera feed detections should be triggered using grid system
 - Communication from sensors to SimpleSensor (code is there, events are not handled yet)
 
 ##### Notes
 Today we have two support for two types of cameras in our facedetect module:
 - [IDS XS](https://en.ids-imaging.com/store/products/cameras/usb-2-0-cameras/ueye-xs/show/all.html "IDS XS Camera")
-- Standard usb web cams
+- Standard usb webcams
 
 Currently tested platforms:
 - Windows 10
@@ -78,13 +79,10 @@ To shutdown, press ESC while the console has focus.
 
 ## Install
 
-#### Step 1: Install python
-Install [Anaconda 5.0](https://www.anaconda.com/download/ "Download Anaconda"), from command prompt or Anaconda Shell run:
-- Create environment `conda create -n ss python=3.6 anaconda`
-- Activate the environment `activate ss` or `source activate ss`
-
-#### Step 2: Install dependencies
-- Install requirements `pip install -r requirements.txt`
+Get [Anaconda](https://www.anaconda.com/download/ "Download Anaconda"), from command prompt or Anaconda Shell run:
+- `conda create -n ss python=3.6 anaconda`
+- `activate ss` or `source activate ss`
+- `pip install -r requirements.txt`
 
 
 ## Configure
@@ -98,17 +96,14 @@ Collection Point Params |||
 `collection_point_type` | String | Becomes the `cptype` property of created `CollectionPointEvents`
 
 Websocket Params |||
- --- | --- | --- 
- **Property** | **Type** | **Description** 
-`expose_websocket` | Boolean | Flag to send events along websocket
+--- | --- | --- 
+**Property** | **Type** | **Description** 
 `websocket_port` | Integer | Port number to use for websocket
 `websocket_host` | String | Host name to use for websocket, ie. `127.0.0.1` or `0.0.0.0` to allow all network machines access
 
 Azure Params |||
  --- | --- | --- 
- **Property** | **Type** | **Description** 
-`use_azure` | Boolean | Flag to send events along Azure IoT Hub
-`azure_connection_string` | String | Connection string, retrieved from Azure Console
+**Property** | **Type** | **Description** 
 `azure_message_timeout` | Integer | Time until a message times out
 `azure_timeout` | Integer | Time until Azure connection times out
 `azure_minimum_polling_time` | Integer | Frequency at which to poll for messages
@@ -116,13 +111,11 @@ Azure Params |||
 
 MQTT Params |||
  --- | --- | --- 
- **Property** | **Type** | **Description** 
-`use_mqtt` | Boolean | Flag to publish messages via MQTT
+**Property** | **Type** | **Description** 
 `mqtt_host` | String | Host name of MQTT broker ie. `io.adafruit.com`
 `mqtt_port` | Integer | Port number of MQTT broker, ie. `1883`
 `mqtt_feed_name` | String | Feed name to publish to
 `mqtt_username` | String | Username to MQTT broker
-`mqtt_key` | String | API key or password for MQTT broker
 `mqtt_keep_alive` | Integer | Maximum period in seconds allowed between communications with the broker. If no other messages are being exchanged, this controls the rate at which the client will send ping messages to the broker.
 `mqtt_publish_json` | Boolean | Flag to publish entire message contents as JSON string
 `mqtt_publish_face_values` | Boolean | Flag to publish only the values of the extended data to respective feeds. 
@@ -130,25 +123,43 @@ MQTT Params |||
 
 **NOTE:** See also [Paho MQTT](https://github.com/eclipse/paho.mqtt.python "Paho MQTT")
 
-Other Params |||
+Modules |||
  --- | --- | --- 
- **Property** | **Type** | **Description** 
-`modules` | Array | Names of modules to import
+**Property** | **Type** | **Description** 
+`collection_modules` | Array | Collection point module folder names to use, ie. `camCollectionPoint`
+`communication_modules` | Array | Communication method folder names to use, ie. `websocketServer`
+
+**NOTE:** These are folder names, not file/class/module names. When adding new modules keep the folder names unique.
+
+Etc |||
+ --- | --- | --- 
+**Property** | **Type** | **Description** 
 `test_mode` | Boolean | Flag to allow for debugging workflows
 `slack_channel_webhook_url` | String | Unused for now - for future Slack integration
  
-  
-  #### Step 2: Configure your modules
-  
-  ###### Create your own module:
-  1. Duplicate and rename the `/collection_modules/baseCollectionPoint` directory 
-  2. Replace the `camCollectionPoint` import in `main.py` with your own module: 
-    `from yourCollectionPoint import YourCollectionPoint as CollectionPoint`
-  3. Write your initialization logic in the `__init__()` function
-  4. Write your collection loop logic in the `run()` function
-  5. Optionally import constants through a module configuration file, use `camCollectionPoint` as an example
- 
-  **NOTE:** For details on the included camera/face detection module, see the [module's README](./collection_modules/CamCollectionPoint/README.md "camCollectionPoint README")
+#### Step 2: Configure your secrets
+###### Open `/config/secrets.conf.sample` in your favorite text editor, include keys needed by communication methods you wish to use:
+Secrets |||
+ --- | --- | --- 
+ **Property** | **Type** | **Description** 
+`mqtt_key` | String | API key or password for your MQTT broker account
+`azure_connection_string` | String | Connection string retrieved from your Azure portal
+
+**NOTE:** Save this file as secrets.conf
+
+#### Step 3: Configure your modules
+
+###### Enable/disable packaged modules
+In `config/base.conf`, add/remove the folder names of the modules you wish to use. For example, to use both websocket and MQTT messages, set your `communication_modules` to `["websocketServer", "mqttClient"]`
+
+###### Create your own collection point module:
+1. Duplicate and rename the `/collection_modules/baseCollectionPoint` directory 
+2. Add/replace `collection_modules` array in `config/base.conf` with the name of your new collection point's folder
+3. Write your initialization logic in the `__init__()` function
+4. Write your collection loop logic in the `run()` function
+5. Optionally import constants through a module configuration file, use `camCollectionPoint` as an example
+
+**NOTE:** For details on the included camera/face detection module, see the [module's README](./collection_modules/camCollectionPoint/README.md "camCollectionPoint README")
   
 
 ## Examples
@@ -182,7 +193,7 @@ ok = self.mmTracker.add(bbox={'x':x,'y':y,'w':w,'h':h}, frame=frame)
 ```
 
 #### Javascript Client Examples
-A sample Javascript client connection via websocket can be found [here](other/standalone_web/README.md "Javascript Client Sample")
+A sample Javascript client connection via websocket can be found [here](other/examples/standalone_web/README.md "Javascript Client Sample")
 
 ###### Create a client:
 ```javascript
