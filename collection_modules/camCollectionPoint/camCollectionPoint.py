@@ -21,7 +21,7 @@ from azureImagePrediction import AzureImagePrediction
 
 class CamCollectionPoint(Thread):
 
-    def __init__(self, baseConfig, pOutBoundQueue, pInBoundQueue, loggingQueue):
+    def __init__(self, baseConfig, pInBoundQueue, pOutBoundQueue, loggingQueue):
         """ Initialize new CamCollectionPoint instance.
         Setup queues, variables, configs, predictionEngines, constants and loggers.
         """

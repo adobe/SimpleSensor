@@ -215,16 +215,24 @@ def loadBase(logger):
 
 
     ################ MODULES ################
-    baseConfig['Modules'] = None
+
     try:
-        strVal = configParser.get('BaseConfig', 'modules')
+        strVal = configParser.get('BaseConfig', 'collection_modules')
         val = json.loads(strVal)
     except:
-        strVal = 'baseCollectionPoint'
+        strVal = 'camCollectionPoint'
         val = [strVal]
-    baseConfig['Modules'] = val
-    logger.info("Module folders to import : %s" % strVal)
+    baseConfig['CollectionModules'] = val
+    logger.info("Collection point modules to use : %s" % strVal)
 
+    try:
+        strVal = configParser.get('BaseConfig', 'communication_modules')
+        val = json.loads(strVal)
+    except:
+        strVal = 'websocketServer'
+        val = [strVal]
+    baseConfig['CommunicationModules'] = val
+    logger.info("Communication method modules to use : %s" % strVal)
 
     logger.info("App config for base %s done" % configParser.get('BaseConfig','collection_point_id'))
 

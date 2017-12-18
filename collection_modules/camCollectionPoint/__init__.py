@@ -1,0 +1,1 @@
+from camCollectionPoint import CamCollectionPoint as CollectionMethod
