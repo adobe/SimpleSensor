@@ -14,11 +14,11 @@ import json
 from websocket_server import WebsocketServer
 from threadsafeLogger import ThreadsafeLogger
 
-class CecIotWebsocketServer(Thread):
+class WebsocketServerModule(Thread):
 
     def __init__(self, baseConfig, pInBoundEventQueue, pOutBoundEventQueue, loggingQueue):
 
-        super(CecIotWebsocketServer, self).__init__()
+        super(WebsocketServerModule, self).__init__()
         self.alive = True
         self.config = baseConfig
         self.inQueue = pInBoundEventQueue  # inQueue are messages from the main process to websocket clients

@@ -1,9 +1,6 @@
 import multiprocessing as mp
 import sys
-import os
-import inspect
-from websocketServer import CecIotWebsocketServer
-# from azureIotHub import AzureIotHubConnectionThread
+from importlib import import_module
 from collectionPointEvent import CollectionPointEvent
 import time
 from loggingEngine import LoggingEngine
@@ -11,10 +8,12 @@ from threadsafeLogger import ThreadsafeLogger
 from cv2 import waitKey
 import msvcrt
 import configLoader
-from mqtt import MQTTClient
 
 # List of threads to handle
 threads = []
+
+# Dict of threadsafe queues to handle
+queues = {}
 
 # Logging queue setup
 loggingQueue = mp.Queue()
@@ -28,31 +27,41 @@ loggingEngine.start()
 # Config
 baseConfig = configLoader.load(logger)
 
-# Add collection point modules to path
-for module in baseConfig['Modules']:
-    cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0], os.path.join("collection_modules", module))))
-    if cmd_subfolder not in sys.path:
-        sys.path.insert(0, cmd_subfolder)
+_collectionModuleNames = baseConfig['CollectionModules']
+_communicationModuleNames = baseConfig['CommunicationModules']
+_collectionModules = {}
+_communicationModules = {}
 
-# Import main collection point
-from camCollectionPoint import CamCollectionPoint as CollectionPoint
-
-# Queues
-websocketEventOutboundChannel=mp.Queue()
-websocketEventInboundChannel=mp.Queue()
-azureEventOutboundChannel=mp.Queue()
-mqttEventOutboundChannel=mp.Queue()
+# Collection point queues
 cpEventOutboundChannel=mp.Queue()
 cpEventInboundChannel=mp.Queue()
-threadWebsocketServer = None
-threadAzureIotHubConnection = None
-mainCollectionPoint = None
-alive = True
 
-# Constants
-_useAzure = baseConfig['UseAzure']
-_useMqtt = baseConfig['UseMqtt']
-_exposeWebsocket = baseConfig['ExposeWebsocket']
+# For each collection module, import, initialize
+for moduleName in _collectionModuleNames:
+    try:
+        sys.path.append('./collection_modules/%s'%moduleName)
+        _collectionModules[moduleName] = import_module('collection_modules.%s'%moduleName)
+
+        queues[moduleName] = {}
+        # queues[moduleName]['in'] = mp.Queue()
+        queues[moduleName]['out'] = mp.Queue()
+    except Exception as e:
+        logger.error('Error importing %s: %s'%(moduleName, e))
+
+# For each collection module, import, initialize, and create an in/out queue
+for moduleName in _communicationModuleNames:
+    try:
+        sys.path.append('./communication_modules/%s'%moduleName)
+        _communicationModules[moduleName] = import_module('communication_modules.%s'%moduleName)
+
+        queues[moduleName] = {}
+        queues[moduleName]['in'] = mp.Queue()
+        queues[moduleName]['out'] = mp.Queue()
+    except Exception as e:
+        logger.error('Error importing %s: %s'%(moduleName, e))
+
+
+alive = True
 
 def sendOutboundEventMessage(msg):
 
@@ -60,60 +69,43 @@ def sendOutboundEventMessage(msg):
     Always send string messages, as they are control messages like 'shutdown'.
     """
 
-    #TODO: Make communication channels modular, define local channels
+    #TODO: Define local channels
 
-    if _useAzure is True:
+    for moduleName in _communicationModuleNames:
         if type(msg) is str or not msg.localOnly:
-            azureEventOutboundChannel.put_nowait(msg)
-
-    if _useMqtt:
-        if type(msg) is str or not msg.localOnly:
-            mqttEventOutboundChannel.put_nowait(msg)
-
-    if _exposeWebsocket:
-        websocketEventOutboundChannel.put_nowait(msg)
-
-    logger.debug("Websocket queue size is %s, Azure queue size is %s, MQTT queue size is %s" % (
-        websocketEventOutboundChannel.qsize(),
-        azureEventOutboundChannel.qsize(), 
-        mqttEventOutboundChannel.qsize()))
-
-def shutdown():
-
-    """ Send shutdown message to all communication channel threads, join and exit them. """
-
-    logger.info("Shutting down main process")
-    sendOutboundEventMessage("SHUTDOWN")
-    cpEventOutboundChannel.put_nowait("SHUTDOWN")
-    alive = False
-    
-    for t in threads:
-        t.join(timeout=1.0)
-
-    loggingQueue.put_nowait("SHUTDOWN")
-    sys.exit(0)
+            queues[moduleName]['out'].put_nowait(msg)
+            logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
 
 def loadCommunicationChannels():
-
     """ Create a thread for each communication channel specified in base.conf """
 
-    if _useAzure:
-        azureIotThread = AzureIotHubConnectionThread(baseConfig,azureEventOutboundChannel,None,loggingQueue)
-        threads.append(azureIotThread)
-        azureIotThread.start()
+    for moduleName in _communicationModuleNames:
+        logger.info('Loading communication module : %s'%moduleName)
+        thread = _communicationModules[moduleName].CommunicationMethod(baseConfig, 
+                                                   queues[moduleName]['out'], 
+                                                   queues[moduleName]['in'], 
+                                                   loggingQueue)
+        threads.append(thread)
+        thread.start()
 
-    if _useMqtt:
-        mqttThread = MQTTClient(baseConfig, mqttEventOutboundChannel, None, loggingQueue)
-        threads.append(mqttThread)
-        mqttThread.start()
+def loadCollectionPoints():
+    """ Load collection points.
+    Currently loads and monitors only one collection point/queue.
+    May extend this to multiple collection points in the future.
 
-    if _exposeWebsocket:
-        websocketThread = CecIotWebsocketServer(baseConfig,websocketEventOutboundChannel,websocketEventInboundChannel, loggingQueue)
-        threads.append(websocketThread)
-        websocketThread.start()
+    If there are multiple collection points, use a unique queue for the outbound
+    messages for each of them, and one queue for inbound messages. 
+    """
+    for moduleName in _collectionModuleNames:
+        logger.info('Loading collection module : %s'%moduleName)
+        thread = _collectionModules[moduleName].CollectionMethod(baseConfig, 
+                                                   queues[moduleName]['out'], 
+                                                   cpEventInboundChannel, 
+                                                   loggingQueue)
+        threads.append(thread)
+        thread.start()
 
 def main():
-
     """ Main control logic. 
 
     Initiate all communication channels and collection point.
@@ -124,10 +116,8 @@ def main():
     logger.info('Loading communication channels')
     loadCommunicationChannels()
 
-    logger.info("Starting main collection point process")
-    mainCollectionPoint = CollectionPoint(baseConfig, cpEventInboundChannel, cpEventOutboundChannel, loggingQueue)
-    threads.append(mainCollectionPoint)
-    mainCollectionPoint.start()
+    logger.info("Loading collection points")
+    loadCollectionPoints()
 
     while alive:
         #TODO: Remove Windows dependency to catch esc key
@@ -155,8 +145,30 @@ def main():
 
     shutdown()
 
+def shutdown():
+    """ Send shutdown message to all communication channel threads
+    and collection points, join and exit them. 
+    """
+
+    logger.info("Shutting down main process")
+
+    # Send to communication methods
+    sendOutboundEventMessage("SHUTDOWN")
+
+    # Send to collection methods
+    for moduleName in _collectionModuleNames:
+        queues[moduleName]['out'].put_nowait("SHUTDOWN")
+
+    alive = False
+    
+    for t in threads:
+        t.join(timeout=1.0)
+
+    loggingQueue.put_nowait("SHUTDOWN")
+    sys.exit(0)
+
 if __name__ == '__main__':
-    """ Main entry point for Windows. """
+    """ Main entry point for running on cmd line. """
     python_version = sys.version_info.major
     if python_version == 3:
         main()

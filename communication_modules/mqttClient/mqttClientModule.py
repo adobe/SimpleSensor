@@ -12,12 +12,12 @@ import paho.mqtt.client as mqtt
 from threadsafeLogger import ThreadsafeLogger
 
 
-class MQTTClient(Thread):
+class MQTTClientModule(Thread):
     """ Threaded MQTT client for processing and publishing outbound messages"""
 
     def __init__(self, baseConfig, pInBoundEventQueue, pOutBoundEventQueue, loggingQueue):
 
-        super(MQTTClient, self).__init__()
+        super(MQTTClientModule, self).__init__()
         self.config = baseConfig
         self.alive = True
         self.inQueue = pInBoundEventQueue
@@ -36,7 +36,7 @@ class MQTTClient(Thread):
         self._client = mqtt.Client()
         self._client.username_pw_set(self._username, self._key)
         self._client.on_connect    = self.onConnect
-        self._client.on_disconnect = self.onCisconnect
+        self._client.on_disconnect = self.onDisconnect
         self._client.on_message    = self.onMessage
         self.mqttConnected = False
 

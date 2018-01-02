@@ -1,0 +1,1 @@
+from mqttClientModule import MQTTClientModule as CommunicationMethod
