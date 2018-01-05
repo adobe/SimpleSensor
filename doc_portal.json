@@ -16,6 +16,10 @@
                 {
                     "title":"Camera Collection Point",
                     "path":"https://raw.githubusercontent.com/dbenge/SimpleSensor/master/collection_modules/camCollectionPoint/README.md"
+                },
+                {
+                    "title":"Code Of Conduct",
+                    "path":"https://raw.githubusercontent.com/dbenge/SimpleSensor/master/CODE_OF_CONDUCT.md"
                 }
             ]
         }
