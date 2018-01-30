@@ -30,8 +30,8 @@
 $(function () {
     'use strict';
     window.SimpleSensor = window.SimpleSensor || {};
-    window.SimpleSensor.WebsocketClient = window.SimpleSensor.WebsocketClient || new Promise(function (resolve, reject) {
-            window.SimpleSensor.WebsocketClient = WebsocketClient;
-            resolve(window.SimpleSensor.WebsocketClient);
+    window.SimpleSensor.SimpleSensorUserPresenceUpdateHelper = window.SimpleSensor.SimpleSensorUserPresenceUpdateHelper || new Promise(function (resolve, reject) {
+            window.SimpleSensor.SimpleSensorUserPresenceUpdateHelper = SimpleSensorUserPresenceUpdateHelper;
+            resolve(window.SimpleSensor.SimpleSensorUserPresenceUpdateHelper);
         });
 });

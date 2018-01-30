@@ -1,4 +1,4 @@
-/*
+<!--/*
  *  Copyright 2018 Adobe Systems Incorporated
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,15 +23,5 @@
  * Created : sometime in 2016
  * Author : David bEnGe
  *
- * Init
- * This is overly complex but was needed for a complex application.  This promise is basically just a event to let us know the lib is loaded.
- * I think this is dumb in this simple solution
- */
-$(function () {
-    'use strict';
-    window.SimpleSensor = window.SimpleSensor || {};
-    window.SimpleSensor.WebsocketClient = window.SimpleSensor.WebsocketClient || new Promise(function (resolve, reject) {
-            window.SimpleSensor.WebsocketClient = WebsocketClient;
-            resolve(window.SimpleSensor.WebsocketClient);
-        });
-});
+*/-->
+<sly data-sly-include="/libs/cq/cloudserviceconfigs/components/servicelibs/servicelibs.jsp" />

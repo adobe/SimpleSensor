@@ -1,8 +1,3 @@
 #base=js
 websocketClient.js
-userPresenceClass.js
-apiClass.js
-imageTrackerClass.js
-motionDetectionMain.js
-websocketMain.js
 init.js

@@ -35,7 +35,7 @@
  */
 class WebsocketClient {
     constructor(host, port) {
-        console.log('Creating websocket client');
+        console.log('Creating websocket client for simple sensor');
         this._host = host;
         this._port = port;
         this._messageEventHandlers = [];
@@ -45,7 +45,7 @@ class WebsocketClient {
     connect(){
         const self = this;
 
-        console.log('Connecting websocket client');
+        console.log('Connecting websocket client to simple sensor');
 
         //connect to websocket and start to listen
         this._websocket = new WebSocket("ws://"+this._host+":"+this._port);

@@ -1,4 +1,4 @@
-/*
+<!--/*
  *  Copyright 2018 Adobe Systems Incorporated
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,15 +23,14 @@
  * Created : sometime in 2016
  * Author : David bEnGe
  *
- * Init
- * This is overly complex but was needed for a complex application.  This promise is basically just a event to let us know the lib is loaded.
- * I think this is dumb in this simple solution
- */
-$(function () {
-    'use strict';
-    window.SimpleSensor = window.SimpleSensor || {};
-    window.SimpleSensor.WebsocketClient = window.SimpleSensor.WebsocketClient || new Promise(function (resolve, reject) {
-            window.SimpleSensor.WebsocketClient = WebsocketClient;
-            resolve(window.SimpleSensor.WebsocketClient);
-        });
-});
+*/-->
+<sly data-sly-use.clientLib="/libs/granite/sightly/templates/clientlib.html"
+     data-sly-call="${clientlib.all @ categories='coralui2'}"/>
+
+<sly data-sly-use.clientLib="${'/libs/granite/sightly/templates/clientlib.html'}">
+    <link data-sly-call="${clientlib.css @ categories='cq.screens.channelembed,contexthub.ui'}" data-sly-unwrap/>
+    <script data-sly-call="${clientlib.js @ categories='cq.screens.channelembed'}" data-sly-unwrap/>
+    <script data-sly-call="${clientlib.js @ categories='granite.utils,granite.shared,cq.shared,cq.foundation,contexthub.utils,contexthub.store.simplesensor-user-presence,simplesensor.websocket,simplesensor.user-presence-helper,simplesensor.websocket-demo'}" data-sly-unwrap/>
+</sly>
+
+<sly data-sly-resource="${'contexthub' @ resourceType='granite/contexthub/components/contexthub'}" />

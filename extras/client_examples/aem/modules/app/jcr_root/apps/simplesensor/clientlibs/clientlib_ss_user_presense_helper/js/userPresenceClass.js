@@ -43,7 +43,7 @@ class SimpleSensorUserPresenceUpdateHelper{
     /**
      * updates the user ContextHub user presence store
      *
-     * console check ContextHub.getStore("user_presence_store").getItem("sex");
+     * console check ContextHub.getStore("simplesensor_user_presence").getItem("sex");
      *
      * @param {object} params  {emotions:{Object {"":decimal}, sex:"",glasses:"",facialHair:"",age:"",garmentShapeClassifierTop:"",gsctDominantColor:""gsctStdColor:"",gsctSleeves:"",gsctLength:"",
          *     gsctCollarShape:"",gsctFit:"",ageRangeMin:"",ageRangeMax:"",ethnicity:"",garmentShapeClassifierBottom:"",gscbDominantColor:"",

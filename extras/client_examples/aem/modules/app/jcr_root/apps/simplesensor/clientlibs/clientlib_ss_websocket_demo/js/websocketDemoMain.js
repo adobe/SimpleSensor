@@ -1,5 +1,5 @@
 "use strict";
-class WebsocketMain{
+class websocketDemoMain{
     constructor(){
         this.SHOW_API_HIT_COUNT = false;
         this.SHOW_DISPLAY = false;
@@ -10,17 +10,17 @@ class WebsocketMain{
         this.AGE_SMOOTH_VALUE = 10;
 
         //Face API 1.0 (Azure) settings
-        this.FACE_LOCATION = "westus";
-        this.FACE_URL = "https://" + this.FACE_LOCATION + ".api.cognitive.microsoft.com/face/v1.0/detect?";
-        this.FACE_KEY = "1cb7baa5aeda40c586267e8d40bc19f9";
-        this.FACE_CONTENT_TYPE = "application/octet-stream";
+        //this.FACE_LOCATION = "westus";
+        //this.FACE_URL = "https://" + this.FACE_LOCATION + ".api.cognitive.microsoft.com/face/v1.0/detect?";
+        //this.FACE_KEY = "";
+        //this.FACE_CONTENT_TYPE = "application/octet-stream";
 
         //Default api parameters (PROJECT OXFORD/AZURE)
-        this.API_PARAMS = {
-            "returnFaceId": "true",
-            "returnFaceLandmarks": "false",
-            "returnFaceAttributes": "age,gender,glasses,facialHair"
-        };
+        //this.API_PARAMS = {
+        //    "returnFaceId": "true",
+        //    "returnFaceLandmarks": "false",
+        //    "returnFaceAttributes": "age,gender,glasses,facialHair"
+        //};
 
         this.defaultParams = {
             age: "unknown",
@@ -77,30 +77,30 @@ class WebsocketMain{
 
     showScreensaver() {
         //Show a random couple ad
-        $('.mboxDefault').animate({
-            opacity: 0
-        }, 750, function () {
+        //$('.mboxDefault').animate({
+        //    opacity: 0
+        //}, 750, function () {
             //pick random age from 18 to 60, show couples ad for that age group
-            let ranAge = Math.floor(Math.random()*(60-18+1)+18);
-            console.log('random age: ', ranAge);
-            mboxUpdate('dms-2017-mbox', '/mode=ads', '/glasses=unknown', '/gender=unknown', '/facialHair=unknown', '/age='+ranAge);
-        });
+        //    let ranAge = Math.floor(Math.random()*(60-18+1)+18);
+        //    console.log('random age: ', ranAge);
+        //    mboxUpdate('dms-2017-mbox', '/mode=ads', '/glasses=unknown', '/gender=unknown', '/facialHair=unknown', '/age='+ranAge);
+        //});
 
         //Start timer to keep showing random couple ads
-        this.interval = setInterval(function(){
+        //this.interval = setInterval(function(){
             //Animate the mbox into view and then reset detection
-            $('.mboxDefault').animate({
-                opacity: 0
-            }, 750, function () {
+        //    $('.mboxDefault').animate({
+        //        opacity: 0
+        //    }, 750, function () {
                 //pick random age from 18 to 60, show couples ad for that age group
-                let ranAge = Math.floor(Math.random()*(60-18+1)+18);
-                console.log('random age: ', ranAge);
-                mboxUpdate('dms-2017-mbox', '/mode=ads', '/glasses=unknown', '/gender=unknown', '/facialHair=unknown', '/age='+ranAge);
+        //        let ranAge = Math.floor(Math.random()*(60-18+1)+18);
+        //        console.log('random age: ', ranAge);
+        //        mboxUpdate('dms-2017-mbox', '/mode=ads', '/glasses=unknown', '/gender=unknown', '/facialHair=unknown', '/age='+ranAge);
 
                 // screensaver version below
                 // mboxUpdate('dms-2017-mbox', '/mode=screensaver', '/glasses=unknown', '/gender=unknown', '/facialHair=unknown', '/age=unknown');
-            });
-        }, this.adTimer*1000);
+        //    });
+        //}, this.adTimer*1000);
 
     }
 
@@ -181,33 +181,33 @@ class WebsocketMain{
 
         var _this = this;
         //Request to update mbox failed
-        this.eventElement.addEventListener(adobe.target.event.REQUEST_FAILED, function (event) {
-            console.log('Event', event);
-        });
+        //this.eventElement.addEventListener(adobe.target.event.REQUEST_FAILED, function (event) {
+        //    console.log('Event', event);
+        //});
 
         //Request to update mbox succeeded
-        this.eventElement.addEventListener(adobe.target.event.REQUEST_SUCCEEDED, function (event) {
-            console.log('Event', event);
+        //this.eventElement.addEventListener(adobe.target.event.REQUEST_SUCCEEDED, function (event) {
+        //    console.log('Event', event);
 
-        });
+        //});
 
         //Request to render content succeeded
-        this.eventElement.addEventListener(adobe.target.event.CONTENT_RENDERING_SUCCEEDED, function (event) {
-            console.log('Event', event);
+        //this.eventElement.addEventListener(adobe.target.event.CONTENT_RENDERING_SUCCEEDED, function (event) {
+         //   console.log('Event', event);
 
             //Animate the mbox into view and then reset detection
-            $('.mboxDefault').animate({
-                opacity: 1
-            }, 750, function () {
+        //    $('.mboxDefault').animate({
+        ///        opacity: 1
+        //    }, 750, function () {
 
-            });
-        });
+        //    });
+        //});
 
         //Request to render content failed
-        this.eventElement.addEventListener(adobe.target.event.CONTENT_RENDERING_FAILED, function (event) {
-            console.log('Event', event);
+        //this.eventElement.addEventListener(adobe.target.event.CONTENT_RENDERING_FAILED, function (event) {
+         //   console.log('Event', event);
 
-        });
+        //});
 
     }
 
@@ -386,17 +386,17 @@ class WebsocketMain{
                     this.throwInterfaceEvent('smartad-update', interfaceParams);
 
                     //Animate the mbox into view and then reset detection
-                    $('.mboxDefault').animate({
-                        opacity: 0
-                    }, 750, function () {
-                        console.log('Clearing interval');
+                    //$('.mboxDefault').animate({
+                    //    opacity: 0
+                    //}, 750, function () {
+                    //    console.log('Clearing interval');
                         //cancel the screensaver timer interval
-                        clearInterval(self.interval);
+                    //    clearInterval(self.interval);
 
                         //Update the advertisement in target based on the face attributes
-                        mboxUpdate('dms-2017-mbox', '/mode=ads', '/glasses=' + glassesVal, '/gender=' + genderVal, '/facialHair=' + facialHairVal, '/age=' + ageVal);
+                    //   mboxUpdate('dms-2017-mbox', '/mode=ads', '/glasses=' + glassesVal, '/gender=' + genderVal, '/facialHair=' + facialHairVal, '/age=' + ageVal);
 
-                    });
+                    //});
                 }
             }
         } else {
@@ -529,10 +529,10 @@ class WebsocketMain{
         this.addClassEventListeners(eventElement);
 
         //Initialize the user presence, api, image buffer, image tracker classes, tracking js (ORDER IMPORTANT)
-        this.up = new UserPresence(this.contextHub, this.MIN_CONFIDENCE, this.GENDER_DIFF);
+        this.up = new SimpleSensorUserPresenceUpdateHelper(this.contextHub, this.MIN_CONFIDENCE, this.GENDER_DIFF);
         this.up.updateUserPresenceStore(this.defaultParams);
-        this.api = new API(this.eventElement, 1); //second param is API flag, 0 = Adobe, 1 = Azure
-        this.api.buildAzureAPI(this.API_PARAMS, this.FACE_URL, this.FACE_CONTENT_TYPE, this.FACE_KEY);
+        //this.api = new API(this.eventElement, 1); //second param is API flag, 0 = Adobe, 1 = Azure
+        //this.api.buildAzureAPI(this.API_PARAMS, this.FACE_URL, this.FACE_CONTENT_TYPE, this.FACE_KEY);
 
         //setup websocket
         this.ignoreClose = false;

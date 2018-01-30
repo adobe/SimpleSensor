@@ -1,4 +1,4 @@
-/*
+<!--/*
  *  Copyright 2018 Adobe Systems Incorporated
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,15 +23,17 @@
  * Created : sometime in 2016
  * Author : David bEnGe
  *
- * Init
- * This is overly complex but was needed for a complex application.  This promise is basically just a event to let us know the lib is loaded.
- * I think this is dumb in this simple solution
- */
-$(function () {
-    'use strict';
-    window.SimpleSensor = window.SimpleSensor || {};
-    window.SimpleSensor.WebsocketClient = window.SimpleSensor.WebsocketClient || new Promise(function (resolve, reject) {
-            window.SimpleSensor.WebsocketClient = WebsocketClient;
-            resolve(window.SimpleSensor.WebsocketClient);
-        });
-});
+*/-->
+<!DOCTYPE HTML>
+<html>
+    <head data-sly-include="head.html"></head>
+    <body data-sly-use.body="body.js" class="${properties['cq:cssClass']}" oncontextmenu="return false">
+    	<sly data-sly-include="content.html">
+        Main content - this content will be provided by the 
+        </sly>
+        <sly data-sly-include="customfooterlibs.html" />
+
+        <!-- the overlay element -->
+        <div class="md-overlay"></div>
+    </body>
+</html>
