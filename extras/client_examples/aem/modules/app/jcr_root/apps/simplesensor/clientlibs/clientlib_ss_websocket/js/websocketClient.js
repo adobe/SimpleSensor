@@ -35,7 +35,7 @@
  */
 class WebsocketClient {
     constructor(host, port) {
-        console.log('Creating websocket client for simple sensor');
+        console.info('[WebsocketClient] Creating client for Simple Sensor');
         this._host = host;
         this._port = port;
         this._messageEventHandlers = [];
@@ -43,27 +43,25 @@ class WebsocketClient {
     };
 
     connect(){
-        const self = this;
-
-        console.log('Connecting websocket client to simple sensor');
+        console.info('[WebsocketClient] Connecting client to Simple Sensor');
 
         //connect to websocket and start to listen
         this._websocket = new WebSocket("ws://"+this._host+":"+this._port);
 
-        this._websocket.addEventListener('open',function (event) {
+        this._websocket.addEventListener('open', (event) => {
             console.debug("websocket to " + self._host + ":" + self._port + " opened" );
             // console.log('opened event: ', event);
-            self.dispatch("open", event);
+            this.dispatch("open", event);
         });
 
-        this._websocket.addEventListener('close', function(event) {
+        this._websocket.addEventListener('close', (event) => {
             console.debug("websocket to " + self._host + ":" + self._port + " closed" );
             // console.log('closed event: ', event);
-            self.dispatch("close", event);
+            this.dispatch("close", event);
         });
 
-        this._websocket.addEventListener('message' ,function (event) {
-            self.dispatch("message", JSON.parse(event.data))
+        this._websocket.addEventListener('message' , (event) => {
+            this.dispatch("message", JSON.parse(event.data))
         });
     }
 

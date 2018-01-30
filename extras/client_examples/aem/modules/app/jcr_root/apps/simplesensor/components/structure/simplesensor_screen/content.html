@@ -37,26 +37,36 @@
             <video id="video" width="320" height="240" preload autoplay loop muted></video>
             <canvas id="canvas" width="320" height="240"></canvas>
             <canvas id="diffCanvas" width="320" height="240"></canvas>
-            <p id="apiHitCount">0</p>
         </div>
     </div>
     <canvas id="videoCanvas" width="320" height="240"></canvas>
 </div>
+<div id="log-data-container">
+    <div id="log-data">
+        Data from SimpleSensor... <br>
+    </div>
+</div>
 <div id="infoContainer">
     <div id="infoContent">
-        AEM SCREENS
-        TARGET
-        SimpleSensor IOT
+        Built with:
+        <br>
+        AEM Screens
+        <br>
+        Adobe Target
+        <br>
+        SimpleSensor IoT
+        <br>
+        <br>
+        To see camera feed blobs rendered, turn them on in SimpleSensor.
     </div>
 </div>
 <div id="infoButtonContainer">
+    i
 </div>
 <script>
     $(document).ready(function () {
         var eventElement = document;
-        var mainLoaded = false;
         var infoOverlay = document.getElementById("infoOverlay");
-        var method = infoOverlay.getAttribute("smart-ad-method");
 
         ContextHub.eventing.on(ContextHub.Constants.EVENT_STORE_READY, function(e,d) {
             window.SimpleSensor.WebsocketClientDemo.then(function(WebsocketClientDemo) {

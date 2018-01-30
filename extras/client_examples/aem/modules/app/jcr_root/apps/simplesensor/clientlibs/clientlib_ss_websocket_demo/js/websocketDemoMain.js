@@ -1,26 +1,12 @@
 "use strict";
-class websocketDemoMain{
+class WebsocketDemoMain{
     constructor(){
-        this.SHOW_API_HIT_COUNT = false;
-        this.SHOW_DISPLAY = false;
+        this.SHOW_DISPLAY = true;
 
-        //Default params for user presence
+        // Default params for user presence
         this.MIN_CONFIDENCE = 0.6;
         this.GENDER_DIFF = 0.2;
         this.AGE_SMOOTH_VALUE = 10;
-
-        //Face API 1.0 (Azure) settings
-        //this.FACE_LOCATION = "westus";
-        //this.FACE_URL = "https://" + this.FACE_LOCATION + ".api.cognitive.microsoft.com/face/v1.0/detect?";
-        //this.FACE_KEY = "";
-        //this.FACE_CONTENT_TYPE = "application/octet-stream";
-
-        //Default api parameters (PROJECT OXFORD/AZURE)
-        //this.API_PARAMS = {
-        //    "returnFaceId": "true",
-        //    "returnFaceLandmarks": "false",
-        //    "returnFaceAttributes": "age,gender,glasses,facialHair"
-        //};
 
         this.defaultParams = {
             age: "unknown",
@@ -31,10 +17,48 @@ class websocketDemoMain{
 
         this.websocket = null;
         this.up = null;
-        this.interval = null;
+    }
 
-        if(this.SHOW_API_HIT_COUNT === true){
-            $('#apiHitCount').fadeTo(0,1);
+    init(eventElement, contextHub) {
+
+        this.eventElement = eventElement;
+        this.contextHub = contextHub;
+
+        // Add HTML canvas blob render method
+        this.addCanvasBlobRender();
+
+        // Initialize external params
+        this.setExternalParams();
+
+        // Add interface and class EventListeners
+        this.addInterfaceEventListeners(eventElement);
+        this.addClassEventListeners(eventElement);
+
+        // Initialize UserPresence
+        this.up = new SimpleSensorUserPresenceUpdateHelper(this.contextHub, this.MIN_CONFIDENCE, this.GENDER_DIFF);
+        this.up.updateUserPresenceStore(this.defaultParams);
+
+        // Initialize websocket
+        this.ignoreClose = false;
+        this.reconnectTimer = null;
+        this.reconnectCount = 0;
+        this.websocket = new WebsocketClient("127.0.0.1", 13254);
+        this.addWebsocketEventListeners();
+
+        // Set ContextHub bar and info overlay visibility
+        this.contextHubVisible = false;
+        this.infoVisible = false;
+
+        // Add click events to interface elements
+        this.addInterfaceInteractions();
+
+        // Hide/show elements
+        if(!this.contextHubVisible){
+            $(".contexthub-container").animate({"top":"-4.175rem"}, 1000);
+        }
+
+        if(!this.infoVisible){
+            $("#infoContainer").animate({"opacity":"0"}, 1000);
         }
 
         if (this.SHOW_DISPLAY === true) {
@@ -42,17 +66,10 @@ class websocketDemoMain{
         }
     }
 
-    //dummy function to work like motiondetection
-    attachCameraStreamToWindow(){
-        return new Promise(function(resolve, reject){
-            resolve();
-        });
-    }
-
     reconnectSocket(){
         //try to reconnect
         if(!this.ignoreClose) {
-            console.debug('Websocket failed to connect, retrying in ', Math.min(this.reconnectInterval * 1000 * this.reconnectCount+1, this.reconnectMax * 1000), " ms");
+            console.debug('[WebsocketDemoMain] Websocket failed to connect, retrying in ', Math.min(this.reconnectInterval * 1000 * this.reconnectCount+1, this.reconnectMax * 1000), " ms");
             this.ignoreClose = true;
             this.websocket.reconnect();
             this.reconnectTimer = setTimeout(this.reconnectSocketLoop.bind(this), Math.min(this.reconnectInterval * 1000 * ++this.reconnectCount, this.reconnectMax * 1000));
@@ -61,12 +78,12 @@ class websocketDemoMain{
 
     reconnectSocketLoop(){
         this.websocket.reconnect();
-        console.debug('Websocket failed to connect, retrying in ', Math.min(this.reconnectInterval * 1000 * this.reconnectCount+1, this.reconnectMax * 1000), " ms");
+        console.debug('[WebsocketDemoMain] Websocket failed to connect, retrying in ', Math.min(this.reconnectInterval * 1000 * this.reconnectCount+1, this.reconnectMax * 1000), " ms");
         this.reconnectTimer = setTimeout(this.reconnectSocketLoop.bind(this), Math.min(this.reconnectInterval * 1000 * ++this.reconnectCount, this.reconnectMax * 1000));
     }
 
     socketConnected(){
-        console.debug('Websocket reconnected');
+        console.debug('[WebsocketDemoMain] Websocket reconnected');
         if(this.reconnectTimer) {
             clearTimeout(this.reconnectTimer);
         }
@@ -75,38 +92,9 @@ class websocketDemoMain{
         this.reconnectCount = 0;
     }
 
-    showScreensaver() {
-        //Show a random couple ad
-        //$('.mboxDefault').animate({
-        //    opacity: 0
-        //}, 750, function () {
-            //pick random age from 18 to 60, show couples ad for that age group
-        //    let ranAge = Math.floor(Math.random()*(60-18+1)+18);
-        //    console.log('random age: ', ranAge);
-        //    mboxUpdate('dms-2017-mbox', '/mode=ads', '/glasses=unknown', '/gender=unknown', '/facialHair=unknown', '/age='+ranAge);
-        //});
-
-        //Start timer to keep showing random couple ads
-        //this.interval = setInterval(function(){
-            //Animate the mbox into view and then reset detection
-        //    $('.mboxDefault').animate({
-        //        opacity: 0
-        //    }, 750, function () {
-                //pick random age from 18 to 60, show couples ad for that age group
-        //        let ranAge = Math.floor(Math.random()*(60-18+1)+18);
-        //        console.log('random age: ', ranAge);
-        //        mboxUpdate('dms-2017-mbox', '/mode=ads', '/glasses=unknown', '/gender=unknown', '/facialHair=unknown', '/age='+ranAge);
-
-                // screensaver version below
-                // mboxUpdate('dms-2017-mbox', '/mode=screensaver', '/glasses=unknown', '/gender=unknown', '/facialHair=unknown', '/age=unknown');
-        //    });
-        //}, this.adTimer*1000);
-
-    }
-
     getFocalFaceData(eventData){
+        // Get demographic data from first face in response; clean and return it.
         var faceData = {};
-        console.log('eventData: ', eventData);
         let predictions = eventData._extendedData.predictions;
         if(predictions.length > 0) {
             faceData.maleConfidence = predictions[0].faceAttributes.gender === "male" ? 1 : 0;
@@ -119,107 +107,95 @@ class websocketDemoMain{
     }
 
     setExternalParams(){
+        // Set constants from infoOverlay
         var infoOverlay = document.getElementById("infoOverlay");
-        this.adTimer = infoOverlay.getAttribute("ad-timer"); // ad timer in seconds
         this.reconnectInterval = infoOverlay.getAttribute("websocket-reconnect-interval"); //starting reconnect interval in seconds
         this.reconnectMax = infoOverlay.getAttribute("websocket-reconnect-max"); //maximum reconnect interval in seconds
         this.contextHubVisibleTimer = infoOverlay.getAttribute("context-hub-visible-timer"); //time idle before hiding contexthub
     }
 
-    // Forward websocket events to main event element
     throwWebsocketEvent(name, data){
+        // Prepend events from websocket with 'websocket-' and forward to main event element, document
         var fullName = "websocket-" + name;
         var event = new CustomEvent(fullName, {'detail': data});
         this.eventElement.dispatchEvent(event);
     }
 
     addWebsocketEventListeners(){
-        console.log('adding websocket events');
-        var self = this;
+        console.log('[WebsocketDemoMain] Adding websocket events');
 
         // Listen for websocket messages
-        this.websocket.on("message", function(eventData){
-            if(eventData._topic === "Reset mBox"){ //if message is to reset
-                if(!self.up.isUnknown()) { //and the mbox requires a reset
-                    console.log('Reset mbox');
-                    self.throwWebsocketEvent('reset-mbox', eventData);
+        this.websocket.on("message", (eventData) => {
+            if(eventData._topic === "Reset mBox"){
+                console.info('[WebsocketDemoMain] "Reset mbox" event received');
+                // If user presence is not unknown - ie. there IS a user presence
+                if(!this.up.isUnknown()) {
+                    // Pass the event along ...
+                    this.throwWebsocketEvent('reset', eventData);
                 }
             }
-            else if (eventData._topic === "Found face"){ //or throw found event
-                if (eventData._extendedData.predictions.length > 0) { //if there is at least one prediction
-                    self.throwWebsocketEvent('face-data-received', eventData);
+            else if (eventData._topic === "Found face"){
+                console.info('[WebsocketDemoMain] "Found face" event received');
+                //if there is at least one prediction
+                if (eventData._extendedData.predictions.length > 0) {
+                    this.throwWebsocketEvent('face-data-received', eventData);
                 }
             }
-            else if(eventData._topic === "blob") { //or throw blob event
-                self.throwWebsocketEvent('incoming-blob', eventData);
+            else if(eventData._topic === "blob") {
+                this.throwWebsocketEvent('incoming-blob', eventData);
             }
-            else if (eventData.type === "close"){ //close message
-                if(!self.ignoreClose) {
-                    self.reconnectSocket();
+            else if (eventData.type === "close"){
+                if(!this.ignoreClose) {
+                    this.reconnectSocket();
                 }
             }
-            else if(eventData.type === "open"){ //open message
-                self.socketConnected();
+            else if(eventData.type === "open"){
+                this.socketConnected();
             }
-
         });
-
-        // if websocket was successfully opened, stop timer
-        // this.websocket.on("open", function(eventData){
-        //     console.log('in main class open: ', eventData);
-        //     self.socketConnected();
-        // });
-        //
-        // // if websocket was closed, set growing timer to reconnect
-        // this.websocket.on("close", function(eventData){
-        //    console.log('in main class close: ', eventData);
-        //     self.reconnectSocket();
-        // });
     }
 
-    addTargetEventListeners() {
+    addClassEventListeners(){
+        // Add EventListeners to the document element to handle websocket events
+        this.eventElement.addEventListener('websocket-reset', (e) => {
+            console.info('[WebsocketDemoMain] "websocket-reset" event handled');
+            this.reset();
+        });
 
-        var _this = this;
-        //Request to update mbox failed
-        //this.eventElement.addEventListener(adobe.target.event.REQUEST_FAILED, function (event) {
-        //    console.log('Event', event);
-        //});
+        //direct to websocket success events
+        this.eventElement.addEventListener('websocket-face-data-received', (e) => {
+            console.info('[WebsocketDemoMain] "websocket-face-data-received" event handled');
+            var faceData = this.getFocalFaceData(e.detail);
+            this.appendSimpleSensorData(faceData);
+            this.updateSettings(faceData);
+        });
 
-        //Request to update mbox succeeded
-        //this.eventElement.addEventListener(adobe.target.event.REQUEST_SUCCEEDED, function (event) {
-        //    console.log('Event', event);
+        this.eventElement.addEventListener('websocket-incoming-blob', (e) => {
+            // Display incoming blob data to canvas element
+            var data = e.detail._extendedData.imageData;
+            var dataType = e.detail._extendedData.dataType;
+            var blob = this.b64toBlob(data, dataType, 512);
+            document.getElementById('canvas').renderImage(blob);
+        });
+    }
 
-        //});
+    appendSimpleSensorData(data) {
+        // Add data from SimpleSensor websocket event to log element on page
+        var dataDiv = document.getElementById('log-data');
+        dataDiv.innerHTML += '<br><br>' + JSON.stringify(data);
+    }
 
-        //Request to render content succeeded
-        //this.eventElement.addEventListener(adobe.target.event.CONTENT_RENDERING_SUCCEEDED, function (event) {
-         //   console.log('Event', event);
-
-            //Animate the mbox into view and then reset detection
-        //    $('.mboxDefault').animate({
-        ///        opacity: 1
-        //    }, 750, function () {
-
-        //    });
-        //});
-
-        //Request to render content failed
-        //this.eventElement.addEventListener(adobe.target.event.CONTENT_RENDERING_FAILED, function (event) {
-         //   console.log('Event', event);
-
-        //});
-
+    throwInterfaceEvent(eventName, attributes) {
+        // Prepend 'interface-' to events pertaining to the interface elements; dispatch it.
+        var customEventName = "interface-" + eventName;
+        var aEvent = new CustomEvent(customEventName, {'detail': attributes});
+        this.eventElement.dispatchEvent(aEvent);
     }
 
     addInterfaceEventListeners() {
-
-        var self = this;
-
-        //Listen for face mode and then populate overlay
-        this.eventElement.addEventListener('interface-smartad-update', function (e) {
-
+        // Add EventListeners to the document element to handle interface events
+        this.eventElement.addEventListener('interface-smartad-update', (e) => {
             var attributes = e.detail;
-
             var genderElem = $('#contextHubGender');
             var ageElem = $('#contextHubAge');
             var tagsElem = $('#contextHubTags');
@@ -240,68 +216,8 @@ class websocketDemoMain{
         }, false);
     }
 
-    addClassEventListeners(){
-
-        var self = this;
-        //Listen for Azure success events
-        this.eventElement.addEventListener('api-azure-data-received-success', function (e) {
-
-            console.debug("Main class: successfully received Azure data; updating");
-
-            var faceData = e.detail;
-
-            self.updateSettings(faceData);
-        });
-
-        //direct to websocket success events
-        this.eventElement.addEventListener('websocket-face-data-received', function (e) {
-
-            console.debug("Main class: successfully received websocket data; updating");
-
-            var faceData = self.getFocalFaceData(e.detail);
-
-            self.updateSettings(faceData);
-        });
-
-        //Listen for Azure fails
-        this.eventElement.addEventListener('api-azure-data-received-failure', function (e) {
-
-            console.debug("API Class: data received failure");
-
-        });
-
-        //Listen for face mode and then populate overlay
-        this.eventElement.addEventListener('websocket-face-detected', function (e) {
-
-            console.debug("API Class: receiving image blob");
-
-            var data = e.detail._extendedData.imageData;
-            var dataType = e.detail._extendedData.dataType;
-            var blob = self.b64toBlob(data, dataType, 512);
-            self.api.pushAPIRequest(blob);
-
-        });
-
-        this.eventElement.addEventListener('websocket-incoming-blob', function(e){
-            // console.log('displaying incoming blob');
-            var data = e.detail._extendedData.imageData;
-            var dataType = e.detail._extendedData.dataType;
-            var blob = self.b64toBlob(data, dataType, 512);
-            console.log('about to render blob');
-            document.getElementById('canvas').renderImage(blob);
-        });
-
-        //Listen for reset m-box cues
-        this.eventElement.addEventListener('websocket-reset-mbox', function (e) {
-
-            console.debug("API Class: resetting mbox");
-
-            self.resetMbox();
-
-        });
-    }
-
     b64toBlob(b64Data, contentType, sliceSize) {
+        // Convert base64 string to a blob, given string, MIME, and slice size
         contentType = contentType || '';
         sliceSize = sliceSize || 512;
 
@@ -325,11 +241,9 @@ class websocketDemoMain{
         return blob;
     }
 
-    //Check if there were faces in the API data returned
     updateSettings(faceData) {
-        const self = this;
-        if (faceData !== undefined) {
 
+        if (faceData !== undefined) {
             //Save those values to an object to send with interface event
             var interfaceParams = {
                 'Age': "unknown",
@@ -384,29 +298,13 @@ class websocketDemoMain{
 
                     //Update interface
                     this.throwInterfaceEvent('smartad-update', interfaceParams);
-
-                    //Animate the mbox into view and then reset detection
-                    //$('.mboxDefault').animate({
-                    //    opacity: 0
-                    //}, 750, function () {
-                    //    console.log('Clearing interval');
-                        //cancel the screensaver timer interval
-                    //    clearInterval(self.interval);
-
-                        //Update the advertisement in target based on the face attributes
-                    //   mboxUpdate('dms-2017-mbox', '/mode=ads', '/glasses=' + glassesVal, '/gender=' + genderVal, '/facialHair=' + facialHairVal, '/age=' + ageVal);
-
-                    //});
                 }
             }
-        } else {
-
-            // this.resetMbox();
         }
     }
 
-    resetMbox(){
-        console.log('in reset mbox');
+    reset(){
+        console.log('[WebsocketDemoMain] Reset');
         this.showScreensaver();
         this.throwInterfaceEvent('smartad-update', {
             Gender: "Unknown",
@@ -426,68 +324,55 @@ class websocketDemoMain{
         this.contextHubHideTimer = setTimeout(this.hideContextHubBar.bind(this), this.contextHubVisibleTimer*1000);
     }
 
-
-    //Throw interface events, used to update interface
-    throwInterfaceEvent(eventName, attributes) {
-
-        var customEventName = "interface-" + eventName;
-
-        var aEvent = new CustomEvent(customEventName, {'detail': attributes});
-
-        this.eventElement.dispatchEvent(aEvent);
-    }
-
     hideContextHubBar(){
-        console.log('hiding bar');
+        // Animate hiding top bar with UserPresence data
         this.contextHubVisible = !this.contextHubVisible;
         $(".contexthub-container").animate({"top":"-4.175rem"}, 1000);
     }
 
     showContextHubBar(){
+        // Animate showing top bar with UserPresence data
         this.contextHubVisible = !this.contextHubVisible;
         $(".contexthub-container").animate({"top":"0rem"}, 1000);
 
-        //start timer to hide contexthub
+        // Set timer to hide it again, it is hidden by default
         clearTimeout(this.contextHubHideTimer);
         this.contextHubHideTimer = setTimeout(this.hideContextHubBar.bind(this), this.contextHubVisibleTimer*1000);
     }
 
     hideInfo(){
+        // Hide info overlay showing tech used to build demo
         this.infoVisible = !this.infoVisible;
         $("#infoContainer").animate({"opacity":"0"}, 1000);
     }
 
     showInfo(){
+        // Show info overlay
         this.infoVisible = !this.infoVisible;
         $("#infoContainer").animate({"opacity":"1"}, 1000);
     }
     
     addInterfaceInteractions(){
-        var self = this;
-        document.getElementById("contextHubHideArea").addEventListener("click", function(){
-            console.log('hiding bar');
-            if(self.contextHubVisible){ //animate hiding contexthub
-                console.log('hiding context hub bar');
-                self.hideContextHubBar();
+        // Add EventListeners to interface element click events
+        document.getElementById("contextHubHideArea").addEventListener("click", () => {
+            if(this.contextHubVisible){
+                this.hideContextHubBar();
             }
-            else{ //animate revealing contexthub
-                self.showContextHubBar();
-                console.log('showing context hub bar');
+            else{
+                this.showContextHubBar();
             }
         });
 
-        document.getElementById("infoButtonContainer").addEventListener("click", function(){
-            if(self.infoVisible){ //animate hiding info
-                self.hideInfo();
-                console.log('hiding info');
+        document.getElementById("infoButtonContainer").addEventListener("click", () => {
+            if(this.infoVisible){
+                this.hideInfo();
             }
-            else{ //animate revealing info
-                self.showInfo();
-                console.log('showing info');
+            else{
+                this.showInfo();
             }
         });
 
-        document.getElementById('canvas').addEventListener("click", function(){
+        document.getElementById('canvas').addEventListener("click", () => {
            if(self.SHOW_DISPLAY){
                self.SHOW_DISPLAY = !self.SHOW_DISPLAY;
                $('#canvas, #video').animate({'opacity':'0'}, 1000);
@@ -500,7 +385,8 @@ class websocketDemoMain{
     }
 
     addCanvasBlobRender(){
-        HTMLCanvasElement.prototype.renderImage = function(blob){
+        // Add blob render function to canvas
+        HTMLCanvasElement.prototype.renderImage = (blob) => {
 
             var ctx = this.getContext('2d');
             var img = new Image();
@@ -512,46 +398,4 @@ class websocketDemoMain{
             img.src = window.URL.createObjectURL(blob);
         };
     }
-
-    init(eventElement, contextHub) {
-
-        this.eventElement = eventElement;
-        this.contextHub = contextHub;
-
-        //add HTML canvas render method
-        this.addCanvasBlobRender();
-
-        //set external params
-        this.setExternalParams();
-
-        this.addTargetEventListeners(eventElement);
-        this.addInterfaceEventListeners(eventElement);
-        this.addClassEventListeners(eventElement);
-
-        //Initialize the user presence, api, image buffer, image tracker classes, tracking js (ORDER IMPORTANT)
-        this.up = new SimpleSensorUserPresenceUpdateHelper(this.contextHub, this.MIN_CONFIDENCE, this.GENDER_DIFF);
-        this.up.updateUserPresenceStore(this.defaultParams);
-        //this.api = new API(this.eventElement, 1); //second param is API flag, 0 = Adobe, 1 = Azure
-        //this.api.buildAzureAPI(this.API_PARAMS, this.FACE_URL, this.FACE_CONTENT_TYPE, this.FACE_KEY);
-
-        //setup websocket
-        this.ignoreClose = false;
-        this.reconnectTimer = null;
-        this.reconnectCount = 0;
-        this.websocket = new WebsocketClient("127.0.0.1", 13254);
-        this.addWebsocketEventListeners();
-
-        // setup contexthub bar hiding and info hot spot
-        this.contextHubVisible = false;
-        this.infoVisible = false;
-        this.addInterfaceInteractions();
-
-        if(!this.contextHubVisible){
-            $(".contexthub-container").animate({"top":"-4.175rem"}, 1000);
-        }
-
-        this.showScreensaver(); // Starts tracking on render
-
-    }
-
 }

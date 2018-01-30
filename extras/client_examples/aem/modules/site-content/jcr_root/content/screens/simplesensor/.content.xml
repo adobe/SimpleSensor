@@ -10,7 +10,7 @@
         cq:lastModifiedBy="admin"
         cq:template="/libs/screens/core/templates/project"
         jcr:primaryType="cq:PageContent"
-        jcr:title="SimpleSensor Experiance"
+        jcr:title="SimpleSensor Experience"
         sling:resourceType="screens/core/components/project">
         <Copy_x0020_of_x0020_image jcr:primaryType="nt:unstructured"/>
     </jcr:content>
