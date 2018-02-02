@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0" xmlns:cq="http://www.day.com/jcr/cq/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:nt="http://www.jcp.org/jcr/nt/1.0"
+    jcr:primaryType="cq:Page">
+    <jcr:content
+        cq:template="/libs/screens/core/templates/channelfolder"
+        jcr:primaryType="cq:PageContent"
+        jcr:title="Channels"
+        sling:resourceType="screens/core/components/channelfolder">
+        <image jcr:primaryType="nt:unstructured">
+            <file/>
+        </image>
+        <par jcr:primaryType="nt:unstructured"/>
+    </jcr:content>
+    <touch-tracker/>
+    <showcase/>
+</jcr:root>
