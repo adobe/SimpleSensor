@@ -1,5 +1,4 @@
 # SimpleSensor
-![TrackingImage](https://adobeatadobe.d1.sc.omtrdc.net/b/ss/adbeaaagit/1/H.27.5--NS/0?AQB=1&ndh=1&ce=UTF-8&ns=adobeatadobe&pageName=github%3Asimplesensor%3Areadme&g=%2FAdobeAtAdobe%2Fsimplesensor&ch=github)
 A Python IoT framework to easily integrate sensors of any kind into your projects.  We also have sample clients for standard web sites and Adobe AEM Screens.
 
 
