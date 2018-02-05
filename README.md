@@ -1,5 +1,5 @@
 # SimpleSensor
-A Python IoT framework to easily integrate sensors of any kind into your projects.
+A Python IoT framework to easily integrate sensors of any kind into your projects.  We also have sample clients for standard web sites and Adobe AEM Screens.
 
 
 ## Table of Contents
