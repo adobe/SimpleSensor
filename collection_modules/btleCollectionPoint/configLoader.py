@@ -1,7 +1,26 @@
-'''
-Author: dAvid B3nge
-the main file was getting all yucked up with this config reading and normalizing so I broke it into an secondary file to make it more manageable for each module
-'''
+#################
+ #  Copyright 2018 Adobe Systems Incorporated
+ #
+ #  Licensed under the Apache License, Version 2.0 (the "License");
+ #  you may not use this file except in compliance with the License.
+ #  You may obtain a copy of the License at
+ #
+ #      http://www.apache.org/licenses/LICENSE-2.0
+ #
+ #  Unless required by applicable law or agreed to in writing, software
+ #  distributed under the License is distributed on an "AS IS" BASIS,
+ #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ #  See the License for the specific language governing permissions and
+ #  limitations under the License.
+ #
+ #  not my circus, not my monkeys
+ #
+ #  BTLE Config Loader
+ #
+ #  Created by: Author: dAvid B3nge
+ #  the main file was getting all yucked up with this config reading and normalizing so I broke it into an secondary file to make it more manageable for each module
+ #
+#################
 import configparser
 import os.path
 import json
@@ -9,7 +28,7 @@ from threadsafeLogger import ThreadsafeLogger
 
 def load(loggingQueue):
     """ Load module specific config into dictionary, return it"""    
-    logger = ThreadsafeLogger(loggingQueue, "CamCollectionPoint")
+    logger = ThreadsafeLogger(loggingQueue, "BtleCollectionPoint")
     thisConfig = {}
     configParser = configparser.ConfigParser()
 
@@ -18,7 +37,7 @@ def load(loggingQueue):
     return thisConfig
 
 def loadSecrets(thisConfig, logger, configParser):
-    """ Load module specific secrets """
+    """ Load module specific secrets which at this time we really dont have any"""
     try:
         with open("/secrets.conf") as f:
             configParser.readfp(f)
@@ -26,15 +45,7 @@ def loadSecrets(thisConfig, logger, configParser):
         configParser.read(os.path.join(os.path.dirname(__file__),"config/secrets.conf"))
         exit
 
-    thisConfig['Azure'] = {}
-
-    """azure subscription key"""
-    try:
-        configValue=configParser.get('Secrets','azure_subscription_key')
-    except:
-        configValue = ""
-    logger.info("Azure subscription key : %s" % configValue)
-    thisConfig['Azure']['SubscriptionKey'] = configValue
+    #we dont have any secrets to 
 
     return thisConfig
 
@@ -47,198 +58,148 @@ def loadModule(thisConfig, logger, configParser):
         configParser.read(os.path.join(os.path.dirname(__file__),"config/collectionPoint.conf"))
         exit
 
-    """use ids camera"""
+    """gateway type"""
     try:
-        configValue=configParser.getboolean('CollectionPointConfig','use_ids_camera')
+        configValue=configParser.get('CollectionPointConfig','gateway_type')
     except:
-        configValue = False
-    logger.info("Use IDS camera : %s" % configValue)
-    thisConfig['UseIdsCamera'] = configValue
+        configValue = "proximity"
+    logger.info("btle gateway type : %s" % configValue)
+    thisConfig['GatewayType'] = configValue
 
-    """primary target"""
+    """Proximity Event Interval In Milliseconds"""
     try:
-        configValue=configParser.get('CollectionPointConfig','primary_target')
+        configValue=configParser.getint('CollectionPointConfig','proximity_event_interval_in_milliseconds')
     except:
-        configValue = "closest"
-    logger.info("Primary target : %s" % configValue)
-    thisConfig['PrimaryTarget'] = configValue
+        configValue = 5000
+    logger.info("Proximity Event Interval In Milliseconds : %s" % configValue)
+    thisConfig['ProximityEventIntervalInMilliseconds'] = configValue
 
-    """closest threshold"""
+    """Leave time in milliseconds"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','closest_threshold')
+        configValue=configParser.getint('CollectionPointConfig','leave_time_in_milliseconds')
     except:
-        configValue = 2
-    logger.info("Closest threshold : %s" % configValue)
-    thisConfig['ClosestThreshold'] = configValue
+        configValue = 1500
+    logger.info("Leave time in milliseconds : %s" % configValue)
+    thisConfig['LeaveTimeInMilliseconds'] = configValue
 
-    """capture width"""
+    """Abandoned client cleanup interval in milliseconds"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','capture_width')
+        configValue=configParser.getint('CollectionPointConfig','abandoned_client_cleanup_interval_in_milliseconds')
     except:
-        configValue = 1600
-    logger.info("Capture width : %s" % configValue)
-    thisConfig['CaptureWidth'] = configValue
+        configValue = 300000
+    logger.info("Abandoned client cleanup interval in milliseconds : %s" % configValue)
+    thisConfig['AbandonedClientCleanupIntervalInMilliseconds'] = configValue
 
-    """capture height"""
+    """Abandoned client timeout in milliseconds"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','capture_height')
+        configValue=configParser.getint('CollectionPointConfig','abandoned_client_timeout_in_milliseconds')
     except:
-        configValue = 1200
-    logger.info("Capture height : %s" % configValue)
-    thisConfig['CaptureHeight'] = configValue
+        configValue = 120000
+    logger.info("Abandoned client timeout in milliseconds : %s" % configValue)
+    thisConfig['AbandonedClientTimeoutInMilliseconds'] = configValue
 
-    """target face width"""
+    """Btle rssi client in threshold"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','target_face_width')
+        configValue=configParser.getint('CollectionPointConfig','btle_rssi_client_in_threshold')
     except:
-        configValue = 150
-    logger.info("Target face width : %s" % configValue)
-    thisConfig['TargetFaceWidth'] = configValue
+        configValue = -68
+    logger.info("Btle rssi client in threshold : %s" % configValue)
+    thisConfig['BtleRssiClientInThreshold'] = configValue
 
-    """min face width"""
+    """Btle rssi client in threshold type (rssi or distance)"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','min_face_width')
+        configValue=configParser.get('CollectionPointConfig','btle_rssi_client_in_threshold_type')
     except:
-        configValue = 120
-    logger.info("Min face width : %s" % configValue)
-    thisConfig['MinFaceWidth'] = configValue
+        configValue = "rssi"
+    logger.info("Btle rssi client in threshold type : %s" % configValue)
+    thisConfig['BtleRssiClientInThresholdType'] = configValue
 
-    """min face height"""
+    """Btle device id (com5 or /dev/ttyACM0)"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','min_face_height')
+        configValue=configParser.get('CollectionPointConfig','btle_device_id')
     except:
-        configValue = 120
-    logger.info("Min face height : %s" % configValue)
-    thisConfig['MinFaceHeight'] = configValue
+        configValue = "com3"
+    logger.info("Btle device id : %s" % configValue)
+    thisConfig['BtleDeviceId'] = configValue
 
-    """face pixel buffer"""
+    """Btle device baud rate is 38400 range is 1200 - 2000000"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','face_pixel_buffer')
+        configValue=configParser.getint('CollectionPointConfig','btle_device_baud_rate')
     except:
-        configValue = 40
-    logger.info("Face pixel buffer : %s" % configValue)
-    thisConfig['FacePixelBuffer'] = configValue
+        configValue = 38400
+    logger.info("Btle device baud rate : %s" % configValue)
+    thisConfig['BtleDeviceBaudRate'] = configValue
 
-    """horizontal velocity buffer"""
+    """Btle advertising major"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','horizontal_velocity_buffer')
+        configValue=configParser.getint('CollectionPointConfig','btle_advertising_major')
     except:
-        configValue = 80
-    logger.info("Horizontal velocity buffer : %s" % configValue)
-    thisConfig['HorizontalVelocityBuffer'] = configValue
+        configValue = 100
+    logger.info("Btle advertising major : %s" % configValue)
+    thisConfig['BtleAdvertisingMajor'] = configValue
 
-    """vertical velocity buffer"""
+    """Btle advertising minor"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','vertical_velocity_buffer')
-    except:
-        configValue = 60
-    logger.info("Vertical velocity buffer : %s" % configValue)
-    thisConfig['VerticalVelocityBuffer'] = configValue
-
-    """use velocity"""
-    try:
-        configValue=configParser.getboolean('CollectionPointConfig','use_velocity')
-    except:
-        configValue = False
-    logger.info("Use velocity : %s" % configValue)
-    thisConfig['UseVelocity'] = configValue
-
-    """reset event timer"""
-    try:
-        configValue=configParser.getint('CollectionPointConfig','reset_event_timer')
+        configValue=configParser.getint('CollectionPointConfig','btle_advertising_minor')
     except:
         configValue = 10
-    logger.info("Reset event timer : %s" % configValue)
-    thisConfig['ResetEventTimer'] = configValue
+    logger.info("Btle advertising minor : %s" % configValue)
+    thisConfig['BtleAdvertisingMinor'] = configValue
 
-    """collection threshold"""
+    """Btle anomaly reset limit"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','collection_threshold')
+        configValue=configParser.getint('CollectionPointConfig','btle_anomaly_reset_limit')
     except:
         configValue = 2
-    logger.info("Collection threshold : %s" % configValue)
-    thisConfig['CollectionThreshold'] = configValue
+    logger.info("Btle anomaly reset limit : %s" % configValue)
+    thisConfig['BtleAnomalyResetLimit'] = configValue
 
-    """maximum people"""
+    """Btle rssi needed sample size"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','maximum_people')
+        configValue=configParser.getint('CollectionPointConfig','btle_rssi_needed_sample_size')
     except:
-        configValue = 6
-    logger.info("Maximum people : %s" % configValue)
-    thisConfig['MaximumPeople'] = configValue
+        configValue = 1
+    logger.info("Btle rssi needed sample size : %s" % configValue)
+    thisConfig['BtleRssiNeededSampleSize'] = configValue
 
-    """show video stream"""
+    """Btle rssi max sample size"""
     try:
-        configValue=configParser.getboolean('CollectionPointConfig','show_video_stream')
+        configValue=configParser.getint('CollectionPointConfig','btle_rssi_max_sample_size')
     except:
-        configValue = True
-    logger.info("Show video stream : %s" % configValue)
-    thisConfig['ShowVideoStream'] = configValue
+        configValue = 1
+    logger.info("Btle rssi max sample size : %s" % configValue)
+    thisConfig['BtleRssiMaxSampleSize'] = configValue
 
-    """min nearest neighbors"""
+    """Btle rssi error variance"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','min_nearest_neighbors')
+        configValue=configParser.getfloat('CollectionPointConfig','btle_rssi_error_variance')
     except:
-        configValue = 7
-    logger.info("Min nearest neighbors : %s" % configValue)
-    thisConfig['MinNearestNeighbors'] = configValue
+        configValue = .12
+    logger.info("Btle rssi error variance : %s" % configValue)
+    thisConfig['BtleRssiErrorVariance'] = configValue
 
-    """compression factor ids only"""
+    """Btle device tx power"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','compression_factor')
+        configValue=configParser.getint('CollectionPointConfig','btle_device_tx_power')
     except:
-        configValue = 9
-    logger.info("IDS compression factor : %s" % configValue)
-    thisConfig['CompressionFactor'] = configValue
+        configValue = 15
+    logger.info("Btle device tx power : %s" % configValue)
+    thisConfig['BtleDeviceTxPower'] = configValue
 
-    """pixel clock ids only"""
+    """Btle client out count threshold"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','pixel_clock')
+        configValue=configParser.getint('CollectionPointConfig','btle_client_out_count_threshold')
     except:
-        configValue = 18
-    logger.info("IDS pixel clock : %s" % configValue)
-    thisConfig['PixelClock'] = configValue
+        configValue = 5
+    logger.info("Btle client out count threshold : %s" % configValue)
+    thisConfig['BtleClientOutCountThreshold'] = configValue
 
-    """bits per pixel"""
+    """Slack channel webhook url"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','bits_per_pixel')
+        configValue=configParser.get('CollectionPointConfig','slack_channel_webhook_url')
     except:
-        configValue = 8
-    logger.info("Bits per pixel : %s" % configValue)
-    thisConfig['BitsPerPixel'] = configValue
-
-    """send blob"""
-    try:
-        configValue=configParser.getboolean('CollectionPointConfig','send_blobs')
-    except:
-        configValue = False
-    logger.info("Send blob : %s" % configValue)
-    thisConfig['SendBlobs'] = configValue
-
-    try:
-        configValue=configParser.getint('CollectionPointConfig','blob_width')
-    except:
-        configValue = 320
-    logger.info("Blob width : %s" % configValue)
-    thisConfig['BlobWidth'] = configValue
-
-    try:
-        configValue=configParser.getint('CollectionPointConfig','blob_height')
-    except:
-        configValue = 240
-    logger.info("Blob height : %s" % configValue)
-    thisConfig['BlobHeight'] = configValue
-
-
-    '''AZURE CONFIG '''
-
-    """uri base"""
-    try:
-        configValue=configParser.get('Azure','uri_base')
-    except:
-        configValue = "westus.api.cognitive.microsoft.com"
-    logger.info("Azure uri base : %s" % configValue)
-    thisConfig['Azure']['UriBase'] = configValue
-
+        configValue = ""
+    logger.info("Slack channel webhook url : %s" % configValue)
+    thisConfig['SlackChannelWebhookUrl'] = configValue
 
     return thisConfig

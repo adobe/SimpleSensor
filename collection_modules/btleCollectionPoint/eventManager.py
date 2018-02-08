@@ -4,11 +4,9 @@ from Queue import Queue
 from threading import Thread
 from collectionPointEvent import CollectionPointEvent
 from btle.btleRegisteredClient import BtleRegisteredClient
-from zmqConnectionThread import ZmqConnectionThread
-
 
 class EventManager(object):
-    def __init__(self,collectionPointConfig,zmqConfig,registeredClientRegistry):
+    def __init__(self,collectionPointConfig,pOutBoundQueue,registeredClientRegistry):
         try:
             logging.config.fileConfig("/logging.conf")
         except:
@@ -21,17 +19,7 @@ class EventManager(object):
         self.registeredClientRegistry.eventRegisteredClientAdded += self.__newClientRegistered
         self.registeredClientRegistry.eventRegisteredClientRemoved += self.__removedRegisteredClient
         self.collectionPointConfig = collectionPointConfig
-        self.messageQueue = Queue()
-        self.zmqThread = ZmqConnectionThread(self.messageQueue,zmqConfig)
-
-    def stop(self):
-        self.zmqThread.stop()
-
-    def start(self):
-        self.zmqThread.start()
-        zmqLiveThread = Thread(target=self.zmqThread.readMessages)
-        zmqLiveThread.daemon = True
-        zmqLiveThread.start()
+        self.outBoundEventQueue = pOutBoundQueue
 
     def registerDetectedClient(self,detectedClient):
         self.logger.debug("Registering detected client %s"%detectedClient.extraData["beaconMac"])
@@ -102,6 +90,6 @@ class EventManager(object):
         #update reg
         self.registeredClientRegistry.updateRegisteredClient(registeredClient)
 
-        self.messageQueue.put(eventMessage)
+        self.outBoundEventQueue.put(eventMessage)
 
 
