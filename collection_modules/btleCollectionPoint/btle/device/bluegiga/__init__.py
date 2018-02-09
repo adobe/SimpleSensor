@@ -1,1 +1,1 @@
-from collectionPoint import BtleCollectionPoint
+from btleThreadCollectionPoint import BtleThreadCollectionPoint

@@ -4,6 +4,7 @@ import logging
 import logging.config
 from btle.btleRegisteredClient import BtleRegisteredClient
 import time
+from threadsafeLogger import ThreadsafeLogger
 
 class RegistryEvent(object):
 
@@ -78,13 +79,10 @@ class RegisteredClientRegistry(object):
     eventRegisteredClientUpdated = RegistryEvent()
     eventSweepComplete = RegistryEvent()
 
-    def __init__(self,collectionPointConfig):
-        # logging setup
-        try:
-            logging.config.fileConfig("/logging.conf")
-        except:
-            logging.config.fileConfig(os.path.join(os.path.dirname(__file__),"config/logging.conf"))
-        self.logger = logging.getLogger('registeredClientRegistry.RegisteredClientRegistry')
+    def __init__(self,collectionPointConfig,loggingQueue):
+        # Logger
+        self.loggingQueue = loggingQueue
+        self.logger = ThreadsafeLogger(loggingQueue, __name__)
 
         self.rClients = {}  #registered clients
         self.collectionPointConfig = collectionPointConfig #collection point config
@@ -104,8 +102,8 @@ class RegisteredClientRegistry(object):
 
         clientsToBeRemoved=[] #list of clients to be cleaned up
 
-        currentExpireTime = time.time() - (self.collectionPointConfig['abandonedClientTimeoutInMilliseconds'] /1000) #converted to seconds for compare
-        self.logger.debug("Current time is %s. abandonedClientTimeoutInMilliseconds seconds is %s.  Giving us expire time of %s."%(time.time(),(self.collectionPointConfig['leaveTimeInMilliseconds'] /1000),currentExpireTime))
+        currentExpireTime = time.time() - (self.collectionPointConfig['AbandonedClientTimeoutInMilliseconds'] /1000) #converted to seconds for compare
+        self.logger.debug("Current time is %s. abandonedClientTimeoutInMilliseconds seconds is %s.  Giving us expire time of %s."%(time.time(),(self.collectionPointConfig['LeaveTimeInMilliseconds'] /1000),currentExpireTime))
 
         for udid in self.rClients:
             regClient = self.rClients[udid]

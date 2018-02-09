@@ -22,27 +22,26 @@
  #
 #################
 
-import ConfigParser
-import os.path
+__author__ = "David Benge"
+__license__ = "Apache License, Version 2.0"
+__version__ = "2018-02-08"
+__email__ = "dbenge@adobe.com"
+
 import sys
-import logging
-import logging.config
-import pprint
 import json
 import time
-sys.path.append('./btle')
-sys.path.append('./libs')
-sys.path.append('./btle/device/bluegiga')
-sys.path.append('./btle/device/iogear')
+import multiprocessing as mp
+sys.path.append('./collection_modules/btleCollectionPoint/btle')
+sys.path.append('./collection_modules/btleCollectionPoint/libs')
+sys.path.append('./collection_modules/btleCollectionPoint/btle/device/bluegiga')
+sys.path.append('./collection_modules/btleCollectionPoint/btle/device/iogear')
 from eventManager import EventManager
-from threading import Thread
-from Queue import Queue
 from btle.device.bluegiga.btleThread import BlueGigaBtleCollectionPointThread
-#from btle.device.iogear.btleThread import IoGearBtleCollectionPointThread
-from registeredClientRegistry import *
+import registeredClientRegistry
+from registeredClientRegistry import RegisteredClientRegistry
 from repeatedTimer import RepeatedTimer
-from threadsafeLogger import ThreadsafeLogger
 from threading import Thread
+from threadsafeLogger import ThreadsafeLogger
 import configLoader
 
 class BtleCollectionPoint(Thread):
@@ -57,7 +56,7 @@ class BtleCollectionPoint(Thread):
         self.outQueue = pOutBoundQueue #messages from this thread to the main process
         self.inQueue= pInBoundQueue
         self.loggingQueue = loggingQueue
-        self.queueBLE = Queue()
+        self.queueBLE = mp.Queue()
 
         # Configs
         self.moduleConfig = configLoader.load(self.loggingQueue) #Get the config for this module
@@ -67,23 +66,25 @@ class BtleCollectionPoint(Thread):
         self.logger = ThreadsafeLogger(loggingQueue, __name__)
 
         # Variables
-        self.registeredClientRegistry = RegisteredClientRegistry(self.moduleConfig)
-        self.eventManager = EventManager(self.moduleConfig,pOutBoundQueue,self.registeredClientRegistry)
+        self.registeredClientRegistry = None
+        self.eventManager = EventManager(self.moduleConfig,pOutBoundQueue,self.registeredClientRegistry,self.loggingQueue)
         self.alive = True
         self.btleThread = None
         self.BLEThread = None
         self.repeatTimerSweepClients = None
 
+    # main start method
+    def run(self):
         ###Pausing Startup to wait for things to start after a system restart
         self.logger.info("Pausing execution 15 seconds waiting for other system services to start")
         time.sleep(15)
         self.logger.info("Done with our nap.  Time to start looking for clients")
 
         #########  setup global client registry start #########
-        self.registeredClientRegistry = RegisteredClientRegistry(self.moduleConfig)
+        self.registeredClientRegistry = RegisteredClientRegistry(self.moduleConfig,self.loggingQueue)
         #########  setup global client registry end #########
 
-        self.btleThread = BlueGigaBtleCollectionPointThread(self.queueBLE,self.moduleConfig)
+        self.btleThread = BlueGigaBtleCollectionPointThread(self.queueBLE,self.moduleConfig,self.logger)
         self.BLEThread = Thread(target=self.btleThread.bleDetect, args=(__name__,10))
         self.BLEThread.daemon = True
         self.BLEThread.start()
@@ -96,7 +97,7 @@ class BtleCollectionPoint(Thread):
             while True:
                 if (self.queueBLE.empty() == False):
                     result = self.queueBLE.get(False)
-                    self.handleBtleClientEvents(result)
+                    self.__handleBtleClientEvents(result)
         except KeyboardInterrupt:
             self.logger.info("attempting to close threads.")
             self.repeatTimerSweepClients.stop()
@@ -104,7 +105,7 @@ class BtleCollectionPoint(Thread):
             self.logger.info("threads successfully closed")
 
     #handle btle reads
-    def handleBtleClientEvents(self,dectectedClients):
+    def __handleBtleClientEvents(self,dectectedClients):
         #logger.debug("doing handleBtleClientEvents")
         for client in dectectedClients:
             self.logger.debug("--- Found client ---")

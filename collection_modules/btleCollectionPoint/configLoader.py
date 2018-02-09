@@ -50,14 +50,16 @@ def loadSecrets(thisConfig, logger, configParser):
     return thisConfig
 
 def loadModule(thisConfig, logger, configParser):
+    logger.info("Loading config")
     """ Load module config """
     try:
         with open("/collectionPoint.conf") as f:
             configParser.readfp(f)
     except IOError:
         configParser.read(os.path.join(os.path.dirname(__file__),"config/collectionPoint.conf"))
-        exit
+        
 
+    exit
     """gateway type"""
     try:
         configValue=configParser.get('CollectionPointConfig','gateway_type')

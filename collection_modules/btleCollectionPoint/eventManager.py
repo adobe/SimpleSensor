@@ -1,19 +1,17 @@
 import os.path
 import logging
-from Queue import Queue
-from threading import Thread
 from collectionPointEvent import CollectionPointEvent
 from btle.btleRegisteredClient import BtleRegisteredClient
+from threadsafeLogger import ThreadsafeLogger
 
 class EventManager(object):
-    def __init__(self,collectionPointConfig,pOutBoundQueue,registeredClientRegistry):
-        try:
-            logging.config.fileConfig("/logging.conf")
-        except:
-            logging.config.fileConfig(os.path.join(os.path.dirname(__file__),"config/logging.conf"))
+    def __init__(self,collectionPointConfig,pOutBoundQueue,registeredClientRegistry,loggingQueue):
+        # Logger
+        self.loggingQueue = loggingQueue
+        self.logger = ThreadsafeLogger(loggingQueue, __name__)
+
         self.__stats_totalRemoveEvents = 0
         self.__stats_totalNewEvents = 0
-        self.logger = logging.getLogger('eventManager.EventManager')
         self.logger.debug("in constructor")
         self.registeredClientRegistry = registeredClientRegistry
         self.registeredClientRegistry.eventRegisteredClientAdded += self.__newClientRegistered
@@ -29,7 +27,7 @@ class EventManager(object):
         if eClient == None:
             #Newly found client
             if self.collectionPointConfig['InterfaceType'] == 'btle':
-                rClient = BtleRegisteredClient(detectedClient,self.collectionPointConfig)
+                rClient = BtleRegisteredClient(detectedClient,self.collectionPointConfig,self.loggingQueue)
             self.logger.debug("client %s not found in the existing clients. NEW CLIENT! "%detectedClient.extraData["beaconMac"])
 
             if rClient.shouldSendClientInEvent():

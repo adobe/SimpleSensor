@@ -635,7 +635,7 @@ class BGLib(object):
 
     def send_command(self, ser, packet):
         if self.packet_mode: packet = chr(len(packet) & 0xFF) + packet
-        if self.debug: print '=>[ ' + ' '.join(['%02X' % ord(b) for b in packet ]) + ' ]'
+        if self.debug: print('=>[ ' + ' '.join(['%02X' % ord(b) for b in packet ]) + ' ]')
         self.on_before_tx_command()
         self.busy = True
         self.on_busy()
@@ -682,7 +682,7 @@ class BGLib(object):
 
         #print '%02X: %d, %d' % (b, len(self.bgapi_rx_buffer), self.bgapi_rx_expected_length)
         if self.bgapi_rx_expected_length > 0 and len(self.bgapi_rx_buffer) == self.bgapi_rx_expected_length:
-            if self.debug: print '<=[ ' + ' '.join(['%02X' % b for b in self.bgapi_rx_buffer ]) + ' ]'
+            if self.debug: print('<=[ ' + ' '.join(['%02X' % b for b in self.bgapi_rx_buffer ]) + ' ]')
             packet_type, payload_length, packet_class, packet_command = self.bgapi_rx_buffer[:4]
             self.bgapi_rx_payload = b''.join(chr(i) for i in self.bgapi_rx_buffer[4:])
             self.bgapi_rx_buffer = []

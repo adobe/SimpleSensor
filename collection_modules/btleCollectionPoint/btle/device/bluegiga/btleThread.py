@@ -7,23 +7,21 @@ import json
 import requests
 import platform
 from threading import Thread
-from collectionPoint import BtleCollectionPoint
+from btleThreadCollectionPoint import BtleThreadCollectionPoint
 from detectedClient import DetectedClient
-
+from threadsafeLogger import ThreadsafeLogger
 
 class BlueGigaBtleCollectionPointThread(Thread):
     alive = True
 
-    def __init__(self,queue,btleConfig,debugMode=False):
+    def __init__(self,queue,btleConfig,loggingQueue,debugMode=False):
         Thread.__init__(self)
-        # logging setup
-        try:
-            logging.config.fileConfig("/logging.conf")
-        except:
-            logging.config.fileConfig(os.path.join(os.path.dirname(__file__),"../../../config/logging.conf"))
-        self.logger = logging.getLogger('btleThread.BtleThread')
+        # Logger
+        self.loggingQueue = loggingQueue
+        self.logger = ThreadsafeLogger(loggingQueue, __name__)
+
         self.btleConfig = btleConfig
-        self.btleCollectionPoint = BtleCollectionPoint(self.eventScanResponse,self.btleConfig)
+        self.btleCollectionPoint = BtleThreadCollectionPoint(self.eventScanResponse,self.btleConfig,self.loggingQueue)
         self.queue = queue
 
     def bleDetect(self,__name__,repeatcount=10):
@@ -65,8 +63,8 @@ class BlueGigaBtleCollectionPointThread(Thread):
             except:
                 minorNumber = 0
 
-            if self.btleConfig['major'] == majorNumber and self.btleConfig['minor'] == minorNumber:
-                self.logger.debug("self.btleConfig['major'] == %i and self.btleConfig['minor'] == %i "%(majorNumber,minorNumber))
+            if self.btleConfig['major'] == majorNumber and self.btleConfig['BtleAdvertisingMinor'] == minorNumber:
+                self.logger.debug("self.btleConfig['BtleAdvertisingMinor'] == %i and self.btleConfig['BtleAdvertisingMinor'] == %i "%(majorNumber,minorNumber))
                 self.logger.debug("yep, we care about this major and minor so lets create a detected client and pass it to the event manager")
 
                 udid = "%s" % ''.join(['%02X' % b for b in args["data"][9:25]])
@@ -99,7 +97,7 @@ class BlueGigaBtleCollectionPointThread(Thread):
         self.alive = False
 
     def sendFailureNotice(self,msg):
-        if len(self.btleConfig['slackChannelWebhookUrl']) > 10:
+        if len(self.btleConfig['SlackChannelWebhookUrl']) > 10:
             myMsg = 'Help I have fallen and can not get back up! \n %s. \nSent from %s'%(msg,platform.node())
             payload = {'text': myMsg}
-            r = requests.post(self.btleConfig['slackChannelWebhookUrl'], data = json.dumps(payload))
+            r = requests.post(self.btleConfig['SlackChannelWebhookUrl'], data = json.dumps(payload))

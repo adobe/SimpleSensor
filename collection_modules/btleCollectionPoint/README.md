@@ -24,10 +24,10 @@ creeper-btle-collectionpoint
     <li>sudo shutdown -r now</li>
 </ol>
 <br/>
-<h2>Setup for BlueGiga</h2>
+<h2>Setup for BlueGiga 112 usb</h2>
 <ol>
-    <li>sudo easy_install pip</li>
-    <li>pip install pyzmq --install-option="--zmq=bundled"</li>
+    <li>if windows install the windows BlueGiga 112 usb driver</li>
+    <li>`activate ss` or `source activate ss`</li>
     <li>pip install pyserial</li>
     <li>pip install requests</li>
 </ol>

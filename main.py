@@ -51,6 +51,7 @@ for moduleName in _collectionModuleNames:
 # For each collection module, import, initialize, and create an in/out queue
 for moduleName in _communicationModuleNames:
     try:
+        logger.debug('importing %s'%(moduleName))
         sys.path.append('./communication_modules/%s'%moduleName)
         _communicationModules[moduleName] = import_module('communication_modules.%s'%moduleName)
 
@@ -97,13 +98,18 @@ def loadCollectionPoints():
     messages for each of them, and one queue for inbound messages. 
     """
     for moduleName in _collectionModuleNames:
-        logger.info('Loading collection module : %s'%moduleName)
-        thread = _collectionModules[moduleName].CollectionMethod(baseConfig, 
-                                                   queues[moduleName]['out'], 
-                                                   cpEventInboundChannel, 
-                                                   loggingQueue)
-        threads.append(thread)
-        thread.start()
+        try:
+            logger.info('Loading collection module : %s'%moduleName)
+            thread = _collectionModules[moduleName].CollectionMethod(baseConfig, 
+                                                    queues[moduleName]['out'], 
+                                                    cpEventInboundChannel, 
+                                                    loggingQueue)
+            threads.append(thread)
+            thread.start()
+
+        except Exception as e:
+            print(e)
+            logger.error('Error importing %s: %s'%(moduleName, e))
 
 def main():
     """ Main control logic. 

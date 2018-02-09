@@ -10,21 +10,17 @@ import logging
 import logging.config
 import os.path
 from pprint import pprint
-
 import serial
-
 from libs.bglib import BGLib
+from threadsafeLogger import ThreadsafeLogger
 
+class BtleThreadCollectionPoint(object):
 
-class BtleCollectionPoint(object):
+    def __init__(self,clientEventHandler,btleConfig,loggingQueue,debugMode=False):
+        # Logger
+        self.loggingQueue = loggingQueue
+        self.logger = ThreadsafeLogger(loggingQueue, __name__)
 
-    def __init__(self,clientEventHandler,btleConfig,debugMode=False):
-        # logging setup
-        try:
-            logging.config.fileConfig("/logging.conf")
-        except:
-            logging.config.fileConfig(os.path.join(os.path.dirname(__file__),"../../../config/logging.conf"))
-        self.logger = logging.getLogger('collectionPoint.CollectionPoint')
         self.btleConfig = btleConfig
         self.clientEventHandler = clientEventHandler
         self.debug = debugMode
