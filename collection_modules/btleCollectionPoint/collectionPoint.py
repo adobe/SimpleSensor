@@ -16,7 +16,7 @@
  #  not my circus, not my monkeys
  #
  #  Created by: David bEnGe at some time in 2016
- #  Entry point for the BTLE sensors used in the Adobe SJ CEC entry experiance
+ #  Entry point for the BTLE sensors used in the Adobe SJ CEC entry experience
  #  its basically a reverse BTLE scanner where the area scans to see what tags are in the space.  Each visitor to our CEC gets a badge with 
  #  a small btle beacon that transmits a uuid. 
  #
@@ -42,7 +42,7 @@ from registeredClientRegistry import RegisteredClientRegistry
 from repeatedTimer import RepeatedTimer
 from threading import Thread
 from threadsafeLogger import ThreadsafeLogger
-import configLoader
+import btleConfigLoader as configLoader
 
 class BtleCollectionPoint(Thread):
 
@@ -51,27 +51,29 @@ class BtleCollectionPoint(Thread):
         Setup queues, variables, configs, constants and loggers.
         """
         super(BtleCollectionPoint, self).__init__()
-
+        print('here 1')
          # Queues
         self.outQueue = pOutBoundQueue #messages from this thread to the main process
         self.inQueue= pInBoundQueue
         self.loggingQueue = loggingQueue
         self.queueBLE = mp.Queue()
-
+        print('here 2')
         # Configs
         self.moduleConfig = configLoader.load(self.loggingQueue) #Get the config for this module
         self.config = baseConfig
 
         # Logger
         self.logger = ThreadsafeLogger(loggingQueue, __name__)
-
+        print('here 3')
         # Variables
         self.registeredClientRegistry = None
-        self.eventManager = EventManager(self.moduleConfig,pOutBoundQueue,self.registeredClientRegistry,self.loggingQueue)
+        self.eventManager = EventManager(self.moduleConfig, pOutBoundQueue, self.registeredClientRegistry, self.loggingQueue)
+        print('here 4')
         self.alive = True
         self.btleThread = None
         self.BLEThread = None
         self.repeatTimerSweepClients = None
+        print('here 5')
 
     # main start method
     def run(self):

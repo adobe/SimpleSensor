@@ -5,8 +5,9 @@ from collectionPointEvent import CollectionPointEvent
 import time
 from loggingEngine import LoggingEngine
 from threadsafeLogger import ThreadsafeLogger
-from cv2 import waitKey
-import msvcrt
+# from cv2 import waitKey
+# import msvcrt
+from select import select
 import configLoader
 
 # List of threads to handle
@@ -111,6 +112,15 @@ def loadCollectionPoints():
             print(e)
             logger.error('Error importing %s: %s'%(moduleName, e))
 
+def getch():
+    """ Returns a character from keyboard buffer. """
+    return sys.stdin.read(1)
+
+def kbhit():
+    """ Returns a non-zero integer if a key is in the keyboard buffer. """
+    dr,dw,de = select([sys.stdin], [], [], 0)
+    return dr
+
 def main():
     """ Main control logic. 
 
@@ -127,8 +137,12 @@ def main():
 
     while alive:
         #TODO: Remove Windows dependency to catch esc key
-        if msvcrt.kbhit():
-            ch = msvcrt.getwche()
+        # if msvcrt.kbhit():
+        #     ch = msvcrt.getwche()
+        #     if ch == u'\x1b':
+        if kbhit():
+            ch = getch()
+            print('key hit: ', ch)
             if ch == u'\x1b':
                 logger.info("Handing request to shutdown")
                 break
