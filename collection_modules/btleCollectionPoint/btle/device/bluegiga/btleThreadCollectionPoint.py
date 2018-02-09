@@ -46,8 +46,8 @@ class BtleThreadCollectionPoint(object):
         self.ble.ble_evt_gap_scan_response += self.clientEventHandler
 
         # create serial port object and flush buffers
-        self.logger.info("Establishing serial connection to BLED112 on com port %s at baud rate %s"%(self.btleConfig['deviceId'],self.btleConfig['btleDeviceBaudRate']))
-        self.serial = serial.Serial(port=self.btleConfig['deviceId'], baudrate=self.btleConfig['btleDeviceBaudRate'], timeout=1)
+        self.logger.info("Establishing serial connection to BLED112 on com port %s at baud rate %s"%(self.btleConfig['BtleDeviceId'],self.btleConfig['BtleDeviceBaudRate']))
+        self.serial = serial.Serial(port=self.btleConfig['BtleDeviceId'], baudrate=self.btleConfig['BtleDeviceBaudRate'], timeout=1)
         self.serial.flushInput()
         self.serial.flushOutput()
 

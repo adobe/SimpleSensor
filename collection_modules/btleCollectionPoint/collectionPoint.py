@@ -37,7 +37,7 @@ sys.path.append('./collection_modules/btleCollectionPoint/btle/device/bluegiga')
 sys.path.append('./collection_modules/btleCollectionPoint/btle/device/iogear')
 from eventManager import EventManager
 from btle.device.bluegiga.btleThread import BlueGigaBtleCollectionPointThread
-import registeredClientRegistry
+# import registeredClientRegistry
 from registeredClientRegistry import RegisteredClientRegistry
 from repeatedTimer import RepeatedTimer
 from threading import Thread
@@ -51,29 +51,24 @@ class BtleCollectionPoint(Thread):
         Setup queues, variables, configs, constants and loggers.
         """
         super(BtleCollectionPoint, self).__init__()
-        print('here 1')
          # Queues
         self.outQueue = pOutBoundQueue #messages from this thread to the main process
         self.inQueue= pInBoundQueue
         self.loggingQueue = loggingQueue
         self.queueBLE = mp.Queue()
-        print('here 2')
         # Configs
         self.moduleConfig = configLoader.load(self.loggingQueue) #Get the config for this module
         self.config = baseConfig
 
         # Logger
         self.logger = ThreadsafeLogger(loggingQueue, __name__)
-        print('here 3')
         # Variables
-        self.registeredClientRegistry = None
+        self.registeredClientRegistry = RegisteredClientRegistry(self.moduleConfig, self.loggingQueue)
         self.eventManager = EventManager(self.moduleConfig, pOutBoundQueue, self.registeredClientRegistry, self.loggingQueue)
-        print('here 4')
         self.alive = True
         self.btleThread = None
         self.BLEThread = None
         self.repeatTimerSweepClients = None
-        print('here 5')
 
     # main start method
     def run(self):
@@ -83,10 +78,10 @@ class BtleCollectionPoint(Thread):
         self.logger.info("Done with our nap.  Time to start looking for clients")
 
         #########  setup global client registry start #########
-        self.registeredClientRegistry = RegisteredClientRegistry(self.moduleConfig,self.loggingQueue)
+        # self.registeredClientRegistry = RegisteredClientRegistry(self.moduleConfig, self.loggingQueue)
         #########  setup global client registry end #########
 
-        self.btleThread = BlueGigaBtleCollectionPointThread(self.queueBLE,self.moduleConfig,self.logger)
+        self.btleThread = BlueGigaBtleCollectionPointThread(self.queueBLE, self.moduleConfig, self.loggingQueue)
         self.BLEThread = Thread(target=self.btleThread.bleDetect, args=(__name__,10))
         self.BLEThread.daemon = True
         self.BLEThread.start()
@@ -101,10 +96,10 @@ class BtleCollectionPoint(Thread):
                     result = self.queueBLE.get(False)
                     self.__handleBtleClientEvents(result)
         except KeyboardInterrupt:
-            self.logger.info("attempting to close threads.")
+            self.logger.info("Attempting to close threads.")
             self.repeatTimerSweepClients.stop()
             self.btleThread.stop()
-            self.logger.info("threads successfully closed")
+            self.logger.info("Threads successfully closed")
 
     #handle btle reads
     def __handleBtleClientEvents(self,dectectedClients):

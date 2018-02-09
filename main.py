@@ -5,8 +5,7 @@ from collectionPointEvent import CollectionPointEvent
 import time
 from loggingEngine import LoggingEngine
 from threadsafeLogger import ThreadsafeLogger
-# from cv2 import waitKey
-# import msvcrt
+import msvcrt
 from select import select
 import configLoader
 
@@ -137,16 +136,20 @@ def main():
 
     while alive:
         #TODO: Remove Windows dependency to catch esc key
-        # if msvcrt.kbhit():
-        #     ch = msvcrt.getwche()
-        #     if ch == u'\x1b':
-        if kbhit():
-            ch = getch()
-            print('key hit: ', ch)
+        if msvcrt.kbhit():
+            ch = msvcrt.getwche()
             if ch == u'\x1b':
-                logger.info("Handing request to shutdown")
-                break
-                shutdown()
+
+        # try:
+        #     if kbhit():
+        #         ch = getch()
+        #         print('key hit: ', ch)
+        #         if ch == u'\x1b':
+        #             logger.info("Handing request to shutdown")
+        #             break
+        #             shutdown()
+        # except Exception as e:
+        #     print('Can not read keyboard buffer: ', e)
 
         # Listen to main collection point for events
         if (cpEventInboundChannel.empty() == False):
