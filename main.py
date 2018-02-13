@@ -139,17 +139,9 @@ def main():
         if msvcrt.kbhit():
             ch = msvcrt.getwche()
             if ch == u'\x1b':
-
-        # try:
-        #     if kbhit():
-        #         ch = getch()
-        #         print('key hit: ', ch)
-        #         if ch == u'\x1b':
-        #             logger.info("Handing request to shutdown")
-        #             break
-        #             shutdown()
-        # except Exception as e:
-        #     print('Can not read keyboard buffer: ', e)
+                logger.info("Handing request to shutdown")
+                break
+                shutdown()
 
         # Listen to main collection point for events
         if (cpEventInboundChannel.empty() == False):
