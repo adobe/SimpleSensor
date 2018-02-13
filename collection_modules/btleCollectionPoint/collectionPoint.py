@@ -89,9 +89,13 @@ class BtleCollectionPoint(Thread):
         #Setup repeat task to run the sweep every X interval
         self.repeatTimerSweepClients = RepeatedTimer((self.moduleConfig['AbandonedClientCleanupIntervalInMilliseconds']/1000), self.registeredClientRegistry.sweepOldClients)
 
+        # Process queue from main thread for shutdown messages
+        self.threadProcessQueue = Thread(target=self.processQueue)
+        self.threadProcessQueue.setDaemon(True)
+        self.threadProcessQueue.start()
         #read the queue
         try:
-            while True:
+            while self.alive:
                 if (self.queueBLE.empty() == False):
                     result = self.queueBLE.get(False)
                     self.__handleBtleClientEvents(result)
@@ -100,6 +104,26 @@ class BtleCollectionPoint(Thread):
             self.repeatTimerSweepClients.stop()
             self.btleThread.stop()
             self.logger.info("Threads successfully closed")
+
+    def processQueue(self):
+        self.logger.info("Starting to watch collection point inbound message queue")
+        while self.alive:
+            if (self.inQueue.empty() == False):
+                self.logger.info("Queue size is %s" % self.inQueue.qsize())
+                try:
+                    message = self.inQueue.get(block=False,timeout=1)
+                    if message is not None:
+                        if message == "SHUTDOWN":
+                            self.logger.info("SHUTDOWN command handled on %s" % __name__)
+                            self.shutdown()
+                        else:
+                            self.sendOutMessage(message)
+                except Exception as e:
+                    self.logger.error("Unable to read queue, error: %s " %e)
+                    self.shutdown()
+                self.logger.info("Queue size is %s after" % self.inQueue.qsize())
+            else:
+                time.sleep(.25)
 
     #handle btle reads
     def __handleBtleClientEvents(self,dectectedClients):
@@ -111,8 +135,8 @@ class BtleCollectionPoint(Thread):
             self.eventManager.registerDetectedClient(client)
 
     def shutdown(self):
-        self.logger.info("Shutting down btle collection point")
-        self.threadProcessQueue.join()
+        self.logger.info("Shutting down")
+        # self.threadProcessQueue.join()
         self.alive = False
         time.sleep(1)
         self.exit = True

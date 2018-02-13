@@ -625,20 +625,17 @@ class BGLib(object):
 
     def check_activity(self, ser, timeout=0):
         if timeout > 0:
-            try:
-                ser.timeout = timeout
-                while 1:
-                    x = ser.read()
-                    if len(x) > 0:
-                        self.parse(x)
-                    else: # timeout
-                        self.busy = False
-                        self.on_idle()
-                        self.on_timeout()
-                    if not self.busy: # finished
-                        break
-            except Exception as e:
-                print('exception encountered in bglib: %s'%e)
+            ser.timeout = timeout
+            while 1:
+                x = ser.read()
+                if len(x) > 0:
+                    self.parse(x)
+                else: # timeout
+                    self.busy = False
+                    self.on_idle()
+                    self.on_timeout()
+                if not self.busy: # finished
+                    break
         else:
             while ser.inWaiting(): self.parse(ser.read())
         return self.busy

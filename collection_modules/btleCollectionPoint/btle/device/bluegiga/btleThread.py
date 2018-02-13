@@ -12,14 +12,13 @@ from detectedClient import DetectedClient
 from threadsafeLogger import ThreadsafeLogger
 
 class BlueGigaBtleCollectionPointThread(Thread):
-    alive = True
 
     def __init__(self,queue,btleConfig,loggingQueue,debugMode=False):
         Thread.__init__(self)
         # Logger
         self.loggingQueue = loggingQueue
         self.logger = ThreadsafeLogger(loggingQueue, __name__)
-
+        self.alive = True
         self.btleConfig = btleConfig
         self.btleCollectionPoint = BtleThreadCollectionPoint(self.eventScanResponse,self.btleConfig,self.loggingQueue)
         self.queue = queue
@@ -27,17 +26,17 @@ class BlueGigaBtleCollectionPointThread(Thread):
     def bleDetect(self,__name__,repeatcount=10):
         try:
             self.btleCollectionPoint.start()
-        except:
-            self.logger.error("Unable to connect to BTLE device. FAIL")
+        except Exception as e:
+            self.logger.error("[btleThread] Unable to connect to BTLE device: %s"%e)
             self.sendFailureNotice("Unable to connect to BTLE device")
             quit()
 
         while self.alive:
             try:
                 self.btleCollectionPoint.scan()
-            except:
-                self.logger.error("Unable to connect to BTLE scan. FAIL")
-                self.sendFailureNotice("Unable to connect to BTLE device to preform a scan")
+            except Exception as e:
+                self.logger.error("[btleThread] Unable to scan BTLE device: %s"%e)
+                self.sendFailureNotice("Unable to connect to BTLE device to perform a scan")
                 quit()
 
             # don't burden the CPU
@@ -61,7 +60,7 @@ class BlueGigaBtleCollectionPointThread(Thread):
             except:
                 minorNumber = 0
 
-            if self.btleConfig['major'] == majorNumber and self.btleConfig['BtleAdvertisingMinor'] == minorNumber:
+            if self.btleConfig['BtleAdvertisingMajor'] == majorNumber and self.btleConfig['BtleAdvertisingMinor'] == minorNumber:
                 self.logger.debug("self.btleConfig['BtleAdvertisingMinor'] == %i and self.btleConfig['BtleAdvertisingMinor'] == %i "%(majorNumber,minorNumber))
                 self.logger.debug("yep, we care about this major and minor so lets create a detected client and pass it to the event manager")
 

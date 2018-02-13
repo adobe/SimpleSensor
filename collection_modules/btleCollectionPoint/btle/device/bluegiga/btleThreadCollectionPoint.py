@@ -6,7 +6,7 @@
 
 import optparse
 from pprint import pprint
-import serial
+from serial import Serial
 from libs import BGLib
 from threadsafeLogger import ThreadsafeLogger
 
@@ -43,7 +43,7 @@ class BtleThreadCollectionPoint(object):
 
         # create serial port object and flush buffers
         self.logger.info("Establishing serial connection to BLED112 on com port %s at baud rate %s"%(self.btleConfig['BtleDeviceId'],self.btleConfig['BtleDeviceBaudRate']))
-        self.serial = serial.Serial(port=self.btleConfig['BtleDeviceId'], baudrate=self.btleConfig['BtleDeviceBaudRate'], timeout=1)
+        self.serial = Serial(port=self.btleConfig['BtleDeviceId'], baudrate=self.btleConfig['BtleDeviceBaudRate'], timeout=1)
         self.serial.flushInput()
         self.serial.flushOutput()
 
@@ -122,10 +122,10 @@ class BtleThreadCollectionPoint(object):
 
     def scan(self):
         # check for all incoming data (no timeout, non-blocking)
-        # self.ble.check_activity(self.serial)
+        self.ble.check_activity(self.serial)
 
         # check for all incoming data (with timeout)
-        self.ble.check_activity(self.serial,timeout=1)
+        # self.ble.check_activity(self.serial,timeout=1)
 
 
 
