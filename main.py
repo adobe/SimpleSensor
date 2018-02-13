@@ -139,6 +139,7 @@ def main():
         if msvcrt.kbhit():
             ch = msvcrt.getwche()
             if ch == u'\x1b':
+<<<<<<< HEAD
                 logger.info("Max whats up with this empty if?")
                 break
                 shutdown()
@@ -153,6 +154,11 @@ def main():
         #             shutdown()
         # except Exception as e:
         #     print('Can not read keyboard buffer: ', e)
+=======
+                logger.info("Handing request to shutdown")
+                break
+                shutdown()
+>>>>>>> bc8fceb8d4788fdedf7d027e3c63ec9c7e55fbc0
 
         # Listen to main collection point for events
         if (cpEventInboundChannel.empty() == False):
