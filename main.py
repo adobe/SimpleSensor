@@ -139,6 +139,9 @@ def main():
         if msvcrt.kbhit():
             ch = msvcrt.getwche()
             if ch == u'\x1b':
+                logger.info("Max whats up with this empty if?")
+                break
+                shutdown()
 
         # try:
         #     if kbhit():

@@ -29,7 +29,6 @@ class BlueGigaBtleCollectionPointThread(Thread):
             self.btleCollectionPoint.start()
         except:
             self.logger.error("Unable to connect to BTLE device. FAIL")
-            print("Unable to connect to BTLE device")
             self.sendFailureNotice("Unable to connect to BTLE device")
             quit()
 
@@ -38,7 +37,6 @@ class BlueGigaBtleCollectionPointThread(Thread):
                 self.btleCollectionPoint.scan()
             except:
                 self.logger.error("Unable to connect to BTLE scan. FAIL")
-                print("Unable to connect to BTLE device to preform a scan")
                 self.sendFailureNotice("Unable to connect to BTLE device to preform a scan")
                 quit()
 

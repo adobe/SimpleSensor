@@ -4,14 +4,10 @@
 #
 #
 
-import os
 import optparse
-import logging
-import logging.config
-import os.path
 from pprint import pprint
 import serial
-from libs.bglib import BGLib
+from libs import BGLib
 from threadsafeLogger import ThreadsafeLogger
 
 class BtleThreadCollectionPoint(object):
