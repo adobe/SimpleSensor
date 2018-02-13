@@ -80,11 +80,12 @@ class BtleCollectionPoint(Thread):
         #########  setup global client registry start #########
         # self.registeredClientRegistry = RegisteredClientRegistry(self.moduleConfig, self.loggingQueue)
         #########  setup global client registry end #########
-
+        self.logger.info('here 1')
         self.btleThread = BlueGigaBtleCollectionPointThread(self.queueBLE, self.moduleConfig, self.loggingQueue)
         self.BLEThread = Thread(target=self.btleThread.bleDetect, args=(__name__,10))
         self.BLEThread.daemon = True
         self.BLEThread.start()
+        self.logger.info('here 2')
 
         #Setup repeat task to run the sweep every X interval
         self.repeatTimerSweepClients = RepeatedTimer((self.moduleConfig['AbandonedClientCleanupIntervalInMilliseconds']/1000), self.registeredClientRegistry.sweepOldClients)
@@ -93,22 +94,19 @@ class BtleCollectionPoint(Thread):
         self.threadProcessQueue = Thread(target=self.processQueue)
         self.threadProcessQueue.setDaemon(True)
         self.threadProcessQueue.start()
+        self.logger.info('here 3')
         #read the queue
-        try:
-            while self.alive:
-                if (self.queueBLE.empty() == False):
-                    result = self.queueBLE.get(False)
-                    self.__handleBtleClientEvents(result)
-        except KeyboardInterrupt:
-            self.logger.info("Attempting to close threads.")
-            self.repeatTimerSweepClients.stop()
-            self.btleThread.stop()
-            self.logger.info("Threads successfully closed")
+        while self.alive:
+            if not self.queueBLE.empty():
+                self.logger.info('herheurorhgeoiugheirohgoierhjgtj')
+                result = self.queueBLE.get(False)
+                self.logger.info('result: %s'%result)
+                self.__handleBtleClientEvents(result)
 
     def processQueue(self):
         self.logger.info("Starting to watch collection point inbound message queue")
         while self.alive:
-            if (self.inQueue.empty() == False):
+            if not self.inQueue.empty():
                 self.logger.info("Queue size is %s" % self.inQueue.qsize())
                 try:
                     message = self.inQueue.get(block=False,timeout=1)
@@ -126,9 +124,9 @@ class BtleCollectionPoint(Thread):
                 time.sleep(.25)
 
     #handle btle reads
-    def __handleBtleClientEvents(self,dectectedClients):
-        #logger.debug("doing handleBtleClientEvents")
-        for client in dectectedClients:
+    def __handleBtleClientEvents(self, detectedClients):
+        logger.debug("doing handleBtleClientEvents: %s"%detectedClients)
+        for client in detectedClients:
             self.logger.debug("--- Found client ---")
             self.logger.debug(vars(client))
             self.logger.debug("--- Found client end ---")
@@ -137,6 +135,8 @@ class BtleCollectionPoint(Thread):
     def shutdown(self):
         self.logger.info("Shutting down")
         # self.threadProcessQueue.join()
+        self.repeatTimerSweepClients.stop()
+        self.btleThread.stop()
         self.alive = False
         time.sleep(1)
         self.exit = True

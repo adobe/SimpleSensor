@@ -13,15 +13,15 @@ from threadsafeLogger import ThreadsafeLogger
 
 class BlueGigaBtleCollectionPointThread(Thread):
 
-    def __init__(self,queue,btleConfig,loggingQueue,debugMode=False):
+    def __init__(self, queue, btleConfig, loggingQueue, debugMode=False):
         Thread.__init__(self)
         # Logger
         self.loggingQueue = loggingQueue
         self.logger = ThreadsafeLogger(loggingQueue, __name__)
         self.alive = True
         self.btleConfig = btleConfig
-        self.btleCollectionPoint = BtleThreadCollectionPoint(self.eventScanResponse,self.btleConfig,self.loggingQueue)
         self.queue = queue
+        self.btleCollectionPoint = BtleThreadCollectionPoint(self.eventScanResponse,self.btleConfig,self.loggingQueue)
 
     def bleDetect(self,__name__,repeatcount=10):
         try:
@@ -47,7 +47,7 @@ class BlueGigaBtleCollectionPointThread(Thread):
 
         #check to make sure there is enough data to be a beacon
         if len(args["data"]) > 15:
-            self.logger.debug("=============================== eventScanResponse START ===============================")
+            # self.logger.debug("=============================== eventScanResponse START ===============================")
             try:
                 majorNumber = args["data"][26] | (args["data"][25] << 8)
                 self.logger.debug("majorNumber=%i"%majorNumber)
@@ -87,7 +87,9 @@ class BlueGigaBtleCollectionPointThread(Thread):
                 arrayDetectedClients.append(detectedClient)
 
                 #put it on the queue for the event manager to pick up
+                self.logger.info('before put: %s'%self.queue.qsize())
                 self.queue.put(arrayDetectedClients)
+                self.logger.info('after put: %s'%self.queue.qsize())
                 self.logger.debug("================================= eventScanResponse END =================================")
 
     def stop(self):
