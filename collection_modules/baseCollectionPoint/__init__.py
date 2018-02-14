@@ -1,0 +1,1 @@
+from baseCollectionPoint import CollectionPoint as CollectionMethod
