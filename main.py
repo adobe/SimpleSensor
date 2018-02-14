@@ -71,7 +71,7 @@ def sendOutboundEventMessage(msg):
     """
 
     #TODO: Define local channels
-    logger.debug('message: %s'%msg)
+    # logger.debug('message: %s'%msg)
     for moduleName in _communicationModuleNames:
         if type(msg) is str or not msg.localOnly:
             queues[moduleName]['out'].put_nowait(msg)

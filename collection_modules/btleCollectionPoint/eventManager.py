@@ -1,6 +1,6 @@
 import os.path
 import logging
-from collectionPointEvent import CollectionPointEvent
+from btleCollectionPointEvent import CollectionPointEvent as CollectionPointEvent
 from btle.btleRegisteredClient import BtleRegisteredClient
 from threadsafeLogger import ThreadsafeLogger
 
@@ -78,7 +78,7 @@ class EventManager(object):
             self.__stats_totalRemoveEvents  += 1
 
     def __sendEventToController(self,registeredClient,eventType):
-        eventMessage = CollectionPointEvent(self.collectionPointConfig['collectionPointId'],registeredClient.lastRegisteredTime,registeredClient.detectedClient.extraData["beaconMac"],self.collectionPointConfig['gatewayType'],eventType,registeredClient.getExtenedDataForEvent())
+        eventMessage = CollectionPointEvent(self.collectionPointConfig['CollectionPointId'],registeredClient.lastRegisteredTime,registeredClient.detectedClient.extraData["beaconMac"],self.collectionPointConfig['GatewayType'],eventType,registeredClient.getExtenedDataForEvent())
 
         if eventType == 'clientIn':
             registeredClient.setClientInMessageSentToController()
