@@ -95,12 +95,12 @@ class BtleCollectionPoint(Thread):
         self.threadProcessQueue.setDaemon(True)
         self.threadProcessQueue.start()
         self.logger.info('here 3')
+
         #read the queue
         while self.alive:
             if not self.queueBLE.empty():
-                self.logger.info('herheurorhgeoiugheirohgoierhjgtj')
-                result = self.queueBLE.get(False)
-                self.logger.info('result: %s'%result)
+                self.logger.info('got a thing here herhehrehfhve!~ ~ ~@~@~!#~ ~ #~ #@@~ ~@# @~#')
+                result = self.queueBLE.get(block=False, timeout=1)
                 self.__handleBtleClientEvents(result)
 
     def processQueue(self):
@@ -125,7 +125,7 @@ class BtleCollectionPoint(Thread):
 
     #handle btle reads
     def __handleBtleClientEvents(self, detectedClients):
-        logger.debug("doing handleBtleClientEvents: %s"%detectedClients)
+        self.logger.debug("doing handleBtleClientEvents: %s"%detectedClients)
         for client in detectedClients:
             self.logger.debug("--- Found client ---")
             self.logger.debug(vars(client))

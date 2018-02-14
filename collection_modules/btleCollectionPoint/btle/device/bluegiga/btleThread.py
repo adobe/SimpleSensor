@@ -87,9 +87,7 @@ class BlueGigaBtleCollectionPointThread(Thread):
                 arrayDetectedClients.append(detectedClient)
 
                 #put it on the queue for the event manager to pick up
-                self.logger.info('before put: %s'%self.queue.qsize())
                 self.queue.put(arrayDetectedClients)
-                self.logger.info('after put: %s'%self.queue.qsize())
                 self.logger.debug("================================= eventScanResponse END =================================")
 
     def stop(self):

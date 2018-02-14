@@ -5,7 +5,7 @@ from btle.btleRegisteredClient import BtleRegisteredClient
 from threadsafeLogger import ThreadsafeLogger
 
 class EventManager(object):
-    def __init__(self,collectionPointConfig,pOutBoundQueue,registeredClientRegistry,loggingQueue):
+    def __init__(self, collectionPointConfig, pOutBoundQueue, registeredClientRegistry, loggingQueue):
         # Logger
         self.loggingQueue = loggingQueue
         self.logger = ThreadsafeLogger(loggingQueue, __name__)
@@ -19,7 +19,7 @@ class EventManager(object):
         self.collectionPointConfig = collectionPointConfig
         self.outBoundEventQueue = pOutBoundQueue
 
-    def registerDetectedClient(self,detectedClient):
+    def registerDetectedClient(self, detectedClient):
         self.logger.debug("Registering detected client %s"%detectedClient.extraData["beaconMac"])
         eClient = self.registeredClientRegistry.getRegisteredClient(detectedClient.extraData["beaconMac"])
 
