@@ -1,7 +1,7 @@
 "use strict";
 class WebsocketDemoMain{
     constructor(){
-        this.SHOW_DISPLAY = true;
+        this.SHOW_DISPLAY = false;
 
         // Default params for user presence
         this.MIN_CONFIDENCE = 0.6;
@@ -374,10 +374,22 @@ class WebsocketDemoMain{
 
         document.getElementById('canvas').addEventListener("click", () => {
            if(self.SHOW_DISPLAY){
+                this.websocket.send('close-stream', {
+                    _topic: 'close-stream',
+                    _sender: 'smart-ads',
+                    _recipients: ['camCollectionPoint'],
+                    _extraData: {code: 0}
+                });
                self.SHOW_DISPLAY = !self.SHOW_DISPLAY;
                $('#canvas, #video').animate({'opacity':'0'}, 1000);
            }
            else{
+                this.websocket.send('open-stream', {
+                    _topic: 'open-stream',
+                    _sender: 'smart-ads',
+                    _recipients: ['camCollectionPoint'],
+                    _extraData: {code: 0}
+                });
                self.SHOW_DISPLAY = !self.SHOW_DISPLAY;
                $('#canvas, #video').animate({'opacity':'1'}, 1000);
            }

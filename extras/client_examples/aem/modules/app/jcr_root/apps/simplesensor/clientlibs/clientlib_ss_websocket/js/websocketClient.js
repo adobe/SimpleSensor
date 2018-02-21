@@ -101,4 +101,12 @@ class WebsocketClient {
                 break;
         }
     }
+
+    send(topic, eventData) {
+        var msg = {
+            type: type,
+            data: eventData
+        }
+        this._websocket.send(JSON.stringify(msg));
+    }
 }
