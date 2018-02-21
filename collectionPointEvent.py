@@ -9,14 +9,14 @@ import datetime
 
 class CollectionPointEvent():
 
-    def __init__(self, cpid, cptype, topic, extendedData={}, localOnly=False):
+    def __init__(self, cpid, cptype, topic, extendedData={}, localOnly=False, recipients=['all']):
         self._cpid=cpid
         self._cptype=cptype
         self._topic=topic
         self._eventTime='{0}'.format(datetime.datetime.utcnow())
         self._extendedData=extendedData
         self._localOnly=localOnly #this flag triggers the scope of broadcast, some events we dont want to send everywhere and just want to echo to local websocket
-
+        
     @property
     def cpid(self):
         """Get the id for the collection point that generated the Collection Point Event"""

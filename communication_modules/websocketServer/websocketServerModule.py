@@ -13,6 +13,7 @@ import sys
 import json
 from websocket_server import WebsocketServer
 from threadsafeLogger import ThreadsafeLogger
+from ssmsg import SSMSG
 
 class WebsocketServerModule(Thread):
 
@@ -22,7 +23,7 @@ class WebsocketServerModule(Thread):
         self.alive = True
         self.config = baseConfig
         self.inQueue = pInBoundEventQueue  # inQueue are messages from the main process to websocket clients
-        self.outQueue = pOutBoundEventQueue  # outQueue are messages from clients to main process - not handled
+        self.outQueue = pOutBoundEventQueue  # outQueue are messages from clients to main process
         self.websocketServer = None
         self.loggingQueue = loggingQueue
         self.threadProcessQueue = None
@@ -62,7 +63,16 @@ class WebsocketServerModule(Thread):
     def websocketMessageReceived(self, client, server, message):
         """ Message received callback - called whenever a new message is received. """
 
-        self.logger.debug('Message received')
+        self.logger.debug('Message received: %s'%message)
+        # topic sender recipient extradata localonly
+        message = json.loads(message)
+        _msg = SSMSG(
+            message['data']['_topic'], 
+            message['data']['_sender'], 
+            message['data']['_recipients'], 
+            message['data']['_extraData'], 
+            False)
+        self.outQueue.put_nowait(_msg)
 
     def shutdown(self):
         """ Handle shutdown message. 

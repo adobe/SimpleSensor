@@ -35,6 +35,7 @@ _communicationModules = {}
 # Collection point queues
 cpEventOutboundChannel=mp.Queue()
 cpEventInboundChannel=mp.Queue()
+comEventInboundChannel=mp.Queue()
 
 # For each collection module, import, initialize
 for moduleName in _collectionModuleNames:
@@ -56,7 +57,8 @@ for moduleName in _communicationModuleNames:
         _communicationModules[moduleName] = import_module('communication_modules.%s'%moduleName)
 
         queues[moduleName] = {}
-        queues[moduleName]['in'] = mp.Queue()
+        # queues[moduleName]['in'] = mp.Queue()
+        # queues[moduleName]['in'] = comEventInboundChannel
         queues[moduleName]['out'] = mp.Queue()
     except Exception as e:
         logger.error('Error importing %s: %s'%(moduleName, e))
@@ -64,18 +66,27 @@ for moduleName in _communicationModuleNames:
 
 alive = True
 
-def sendOutboundEventMessage(msg):
+def sendOutboundEventMessage(msg, recipients=['all']):
 
     """ Put outbound message onto queues of all active communication channel threads.
     Always send string messages, as they are control messages like 'shutdown'.
     """
-
-    #TODO: Define local channels
-    # logger.debug('message: %s'%msg)
-    for moduleName in _communicationModuleNames:
-        if type(msg) is str or not msg.localOnly:
-            queues[moduleName]['out'].put_nowait(msg)
-            logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
+    if type(msg) == CollectionPointEvent or recipients == ['all']:
+        # Send to all communication channels
+        for moduleName in _communicationModuleNames:
+            try:
+                if type(msg) is str or not msg._localOnly:
+                    queues[moduleName]['out'].put_nowait(msg)
+                    logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
+            except Exception as e:
+                logger.error('Error adding message to all module queues %s'%e)
+    else:
+        for recipient in recipients:
+            try:
+                queues[recipient]['out'].put_nowait(msg)
+                logger.debug("%s queue size is %s"%(recipient, queues[recipient]['out'].qsize()))
+            except Exception as e:
+                logger.error('Error adding message to queue: %s'%e)
 
 def loadCommunicationChannels():
     """ Create a thread for each communication channel specified in base.conf """
@@ -84,7 +95,8 @@ def loadCommunicationChannels():
         logger.info('Loading communication module : %s'%moduleName)
         thread = _communicationModules[moduleName].CommunicationMethod(baseConfig, 
                                                    queues[moduleName]['out'], 
-                                                   queues[moduleName]['in'], 
+                                                   # queues[moduleName]['in'],
+                                                   comEventInboundChannel, 
                                                    loggingQueue)
         threads.append(thread)
         thread.start()
@@ -142,10 +154,10 @@ def main():
                 break
                 shutdown()
 
-        # Listen to main collection point for events
+        # Listen to inbound message queues for messages
         if (cpEventInboundChannel.empty() == False):
             try:
-                message = cpEventInboundChannel.get(block=False,timeout=1)
+                message = cpEventInboundChannel.get(block=False, timeout=1)
                 if message is not None:
                     if message == "SHUTDOWN":
                         logger.info("SHUTDOWN handled")
@@ -153,7 +165,20 @@ def main():
                     else:
                         sendOutboundEventMessage(message)
             except Exception as e:
-                logger.error("Main unable to read queue : %s " %e)
+                logger.error("Unable to read collection point queue : %s " %e)
+
+        elif (comEventInboundChannel.empty() == False):
+            try:
+                message = comEventInboundChannel.get(block=False, timeout=1)
+                if message is not None:
+                    logger.info('Com message in main: %s'%message)
+                    if message == "SHUTDOWN":
+                        logger.info("SHUTDOWN handled")
+                        shutdown()
+                    else:
+                        sendOutboundEventMessage(message, message._recipients)
+            except Exception as e:
+                logger.error("Unable to read communication channel queue : %s " %e)
         else:
             time.sleep(.25)
 
@@ -167,7 +192,7 @@ def shutdown():
     logger.info("Shutting down main process")
 
     # Send to communication methods
-    sendOutboundEventMessage("SHUTDOWN")
+    sendOutboundEventMessage("SHUTDOWN", ['all'])
 
     # Send to collection methods
     for moduleName in _collectionModuleNames:

@@ -7,4 +7,4 @@ class CollectionPointEvent():
         self.gatewayType=gatewayType
         self.event=event
         self.extendedData=extendedData
-        self.localOnly = False
+        self._localOnly = False
