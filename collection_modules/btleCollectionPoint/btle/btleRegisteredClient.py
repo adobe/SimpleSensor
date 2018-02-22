@@ -188,7 +188,7 @@ class BtleRegisteredClient:
 
 
     #part of interface for Registered Client
-    def getExtenedDataForEvent(self):
+    def getExtendedDataForEvent(self):
         extraData = {}
         extraData['lastRegisteredTime'] = self.lastRegisteredTime
         extraData['firstRegisteredTime'] = self.firstRegisteredTime
@@ -200,6 +200,7 @@ class BtleRegisteredClient:
         extraData['txPower'] = self.getTxPower()
         #TODO INSTALL FIX
         extraData['beaconId'] = self.beaconId
+        extraData['beaconMac'] = self.detectedClient.extraData["beaconMac"]
 
         return extraData
 

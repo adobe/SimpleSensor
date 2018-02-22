@@ -85,35 +85,35 @@ def loadModule(thisConfig, logger, configParser):
 
     """Proximity Event Interval In Milliseconds"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','proximity_event_interval_in_milliseconds')
+        configValue=configParser.getint('CollectionPointConfig','proximity_event_interval')
     except:
         configValue = 5000
     logger.info("Proximity Event Interval In Milliseconds : %s" % configValue)
-    thisConfig['ProximityEventIntervalInMilliseconds'] = configValue
+    thisConfig['ProximityEventInterval'] = configValue
 
     """Leave time in milliseconds"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','leave_time_in_milliseconds')
+        configValue=configParser.getint('CollectionPointConfig','leave_time')
     except:
         configValue = 1500
     logger.info("Leave time in milliseconds : %s" % configValue)
-    thisConfig['LeaveTimeInMilliseconds'] = configValue
+    thisConfig['LeaveTime'] = configValue
 
     """Abandoned client cleanup interval in milliseconds"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','abandoned_client_cleanup_interval_in_milliseconds')
+        configValue=configParser.getint('CollectionPointConfig','abandoned_client_cleanup_interval')
     except:
         configValue = 300000
     logger.info("Abandoned client cleanup interval in milliseconds : %s" % configValue)
-    thisConfig['AbandonedClientCleanupIntervalInMilliseconds'] = configValue
+    thisConfig['AbandonedClientCleanupInterval'] = configValue
 
     """Abandoned client timeout in milliseconds"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','abandoned_client_timeout_in_milliseconds')
+        configValue=configParser.getint('CollectionPointConfig','abandoned_client_timeout')
     except:
         configValue = 120000
     logger.info("Abandoned client timeout in milliseconds : %s" % configValue)
-    thisConfig['AbandonedClientTimeoutInMilliseconds'] = configValue
+    thisConfig['AbandonedClientTimeout'] = configValue
 
     """Btle rssi client in threshold"""
     try:

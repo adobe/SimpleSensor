@@ -1,9 +1,3 @@
-"""
-Sample camera collection point based on face detection events
-author: MaX EdeLL
-date: 13/37/2017
-"""
-
 import cv2
 from collectionPointEvent import CollectionPointEvent
 import time

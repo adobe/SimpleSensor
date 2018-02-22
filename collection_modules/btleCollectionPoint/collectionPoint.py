@@ -1,43 +1,11 @@
-#################
- #  Copyright 2018 Adobe Systems Incorporated
- #
- #  Licensed under the Apache License, Version 2.0 (the "License");
- #  you may not use this file except in compliance with the License.
- #  You may obtain a copy of the License at
- #
- #      http://www.apache.org/licenses/LICENSE-2.0
- #
- #  Unless required by applicable law or agreed to in writing, software
- #  distributed under the License is distributed on an "AS IS" BASIS,
- #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- #  See the License for the specific language governing permissions and
- #  limitations under the License.
- #
- #  not my circus, not my monkeys
- #
- #  Created by: David bEnGe at some time in 2016
- #  Entry point for the BTLE sensors used in the Adobe SJ CEC entry experience
- #  its basically a reverse BTLE scanner where the area scans to see what tags are in the space.  Each visitor to our CEC gets a badge with 
- #  a small btle beacon that transmits a uuid. 
- #
-#################
-
-__author__ = "David Benge"
-__license__ = "Apache License, Version 2.0"
-__version__ = "2018-02-08"
-__email__ = "dbenge@adobe.com"
-
 import sys
 import json
 import time
 import multiprocessing as mp
-sys.path.append('./collection_modules/btleCollectionPoint/btle')
 sys.path.append('./collection_modules/btleCollectionPoint/libs')
-sys.path.append('./collection_modules/btleCollectionPoint/btle/device/bluegiga')
-sys.path.append('./collection_modules/btleCollectionPoint/btle/device/iogear')
+sys.path.append('./collection_modules/btleCollectionPoint/devices/bluegiga')
 from eventManager import EventManager
-from btle.device.bluegiga.btleThread import BlueGigaBtleCollectionPointThread
-# import registeredClientRegistry
+from devices.bluegiga.btleThread import BlueGigaBtleCollectionPointThread
 from registeredClientRegistry import RegisteredClientRegistry
 from repeatedTimer import RepeatedTimer
 from threading import Thread
@@ -51,18 +19,19 @@ class BtleCollectionPoint(Thread):
         Setup queues, variables, configs, constants and loggers.
         """
         super(BtleCollectionPoint, self).__init__()
-         # Queues
-        self.outQueue = pOutBoundQueue #messages from this thread to the main process
-        self.inQueue= pInBoundQueue
         self.loggingQueue = loggingQueue
+        self.logger = ThreadsafeLogger(loggingQueue, __name__)
+
+         # Queues
+        self.outQueue = pOutBoundQueue # Messages from this thread to the main process
+        self.inQueue = pInBoundQueue
         self.queueBLE = mp.Queue()
+
         # Configs
-        self.moduleConfig = configLoader.load(self.loggingQueue) #Get the config for this module
+        self.moduleConfig = configLoader.load(self.loggingQueue)
         self.config = baseConfig
 
-        # Logger
-        self.logger = ThreadsafeLogger(loggingQueue, __name__)
-        # Variables
+        # Variables and objects
         self.registeredClientRegistry = RegisteredClientRegistry(self.moduleConfig, self.loggingQueue)
         self.eventManager = EventManager(self.moduleConfig, pOutBoundQueue, self.registeredClientRegistry, self.loggingQueue)
         self.alive = True
@@ -70,36 +39,31 @@ class BtleCollectionPoint(Thread):
         self.BLEThread = None
         self.repeatTimerSweepClients = None
 
-    # main start method
+        # Constants
+        self._cleanupInterval = self.moduleConfig['AbandonedClientCleanupInterval']
+
     def run(self):
         ###Pausing Startup to wait for things to start after a system restart
         self.logger.info("Pausing execution 15 seconds waiting for other system services to start")
         time.sleep(15)
         self.logger.info("Done with our nap.  Time to start looking for clients")
 
-        #########  setup global client registry start #########
-        # self.registeredClientRegistry = RegisteredClientRegistry(self.moduleConfig, self.loggingQueue)
-        #########  setup global client registry end #########
-        self.logger.info('here 1')
         self.btleThread = BlueGigaBtleCollectionPointThread(self.queueBLE, self.moduleConfig, self.loggingQueue)
         self.BLEThread = Thread(target=self.btleThread.bleDetect, args=(__name__,10))
         self.BLEThread.daemon = True
         self.BLEThread.start()
-        self.logger.info('here 2')
 
         #Setup repeat task to run the sweep every X interval
-        self.repeatTimerSweepClients = RepeatedTimer((self.moduleConfig['AbandonedClientCleanupIntervalInMilliseconds']/1000), self.registeredClientRegistry.sweepOldClients)
+        self.repeatTimerSweepClients = RepeatedTimer((self._cleanupInterval/1000), self.registeredClientRegistry.sweepOldClients)
 
         # Process queue from main thread for shutdown messages
         self.threadProcessQueue = Thread(target=self.processQueue)
         self.threadProcessQueue.setDaemon(True)
         self.threadProcessQueue.start()
-        self.logger.info('here 3')
 
         #read the queue
         while self.alive:
             if not self.queueBLE.empty():
-                self.logger.info('got a thing here herhehrehfhve!~ ~ ~@~@~!#~ ~ #~ #@@~ ~@# @~#')
                 result = self.queueBLE.get(block=False, timeout=1)
                 self.__handleBtleClientEvents(result)
 
@@ -123,9 +87,7 @@ class BtleCollectionPoint(Thread):
             else:
                 time.sleep(.25)
 
-    #handle btle reads
     def __handleBtleClientEvents(self, detectedClients):
-        self.logger.debug("doing handleBtleClientEvents: %s"%detectedClients)
         for client in detectedClients:
             self.logger.debug("--- Found client ---")
             self.logger.debug(vars(client))

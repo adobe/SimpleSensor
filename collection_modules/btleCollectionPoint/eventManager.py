@@ -1,23 +1,23 @@
 import os.path
 import logging
-from btleCollectionPointEvent import CollectionPointEvent as CollectionPointEvent
-from btle.btleRegisteredClient import BtleRegisteredClient
+from collectionPointEvent import CollectionPointEvent
+from btleRegisteredClient import BtleRegisteredClient
 from threadsafeLogger import ThreadsafeLogger
 
 class EventManager(object):
     def __init__(self, collectionPointConfig, pOutBoundQueue, registeredClientRegistry, loggingQueue):
-        # Logger
         self.loggingQueue = loggingQueue
         self.logger = ThreadsafeLogger(loggingQueue, __name__)
 
         self.__stats_totalRemoveEvents = 0
         self.__stats_totalNewEvents = 0
-        self.logger.debug("in constructor")
         self.registeredClientRegistry = registeredClientRegistry
         self.registeredClientRegistry.eventRegisteredClientAdded += self.__newClientRegistered
         self.registeredClientRegistry.eventRegisteredClientRemoved += self.__removedRegisteredClient
         self.collectionPointConfig = collectionPointConfig
         self.outBoundEventQueue = pOutBoundQueue
+
+
 
     def registerDetectedClient(self, detectedClient):
         self.logger.debug("Registering detected client %s"%detectedClient.extraData["beaconMac"])
@@ -28,18 +28,18 @@ class EventManager(object):
             #Newly found client
             if self.collectionPointConfig['InterfaceType'] == 'btle':
                 rClient = BtleRegisteredClient(detectedClient,self.collectionPointConfig,self.loggingQueue)
-            self.logger.debug("client %s not found in the existing clients. NEW CLIENT! "%detectedClient.extraData["beaconMac"])
+            self.logger.debug("New client with MAC %s found."%detectedClient.extraData["beaconMac"])
 
             if rClient.shouldSendClientInEvent():
-                self.__sendEventToController(rClient,"clientIn")
+                self.__sendEventToController(rClient, "clientIn")
             elif rClient.shouldSendClientOutEvent():
                 self.logger.debug("########################################## SENDING CLIENT OUT eClient ##########################################")
-                self.__sendEventToController(rClient,"clientOut")
+                self.__sendEventToController(rClient, "clientOut")
 
             self.registeredClientRegistry.addNewRegisteredClient(rClient)
 
         else:
-            eClient.updateWithNewDectedClientData(detectedClient)
+            eClient.updateWithNewDetectedClientData(detectedClient)
             if eClient.shouldSendClientInEvent():
                 #self.logger.debug("########################################## SENDING CLIENT IN ##########################################")
                 self.__sendEventToController(eClient,"clientIn")
@@ -78,7 +78,13 @@ class EventManager(object):
             self.__stats_totalRemoveEvents  += 1
 
     def __sendEventToController(self,registeredClient,eventType):
-        eventMessage = CollectionPointEvent(self.collectionPointConfig['CollectionPointId'],registeredClient.lastRegisteredTime,registeredClient.detectedClient.extraData["beaconMac"],self.collectionPointConfig['GatewayType'],eventType,registeredClient.getExtenedDataForEvent())
+
+        eventMessage = CollectionPointEvent(
+            self.collectionPointConfig['CollectionPointId'],
+            self.collectionPointConfig['GatewayType'],
+            eventType,
+            registeredClient.getExtendedDataForEvent(),
+            registeredClient.lastRegisteredTime)
 
         if eventType == 'clientIn':
             registeredClient.setClientInMessageSentToController()

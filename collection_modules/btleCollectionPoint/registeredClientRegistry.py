@@ -2,7 +2,7 @@ import os
 import os.path
 import logging
 import logging.config
-from btle.btleRegisteredClient import BtleRegisteredClient
+from btleRegisteredClient import BtleRegisteredClient
 import time
 from threadsafeLogger import ThreadsafeLogger
 
@@ -102,20 +102,16 @@ class RegisteredClientRegistry(object):
 
         clientsToBeRemoved=[] #list of clients to be cleaned up
 
-        currentExpireTime = time.time() - (self.collectionPointConfig['AbandonedClientTimeoutInMilliseconds'] /1000) #converted to seconds for compare
-        self.logger.debug("Current time is %s. abandonedClientTimeoutInMilliseconds seconds is %s.  Giving us expire time of %s."%(time.time(),(self.collectionPointConfig['LeaveTimeInMilliseconds'] /1000),currentExpireTime))
+        currentExpireTime = time.time() - (self.collectionPointConfig['AbandonedClientTimeout']/1000)
 
         for udid in self.rClients:
             regClient = self.rClients[udid]
-            self.logger.debug("checking if registerd tag last registered %s < current expire time %s"%(regClient.lastRegisteredTime,currentExpireTime))
 
             if regClient.lastRegisteredTime < currentExpireTime:
-                self.logger.debug("************************* SWEEP adding registered client to be removed %s" %udid)
                 clientsToBeRemoved.append(regClient)
 
-        #had to do the remove outside the loop becuase you cant alter the object as you try to loop over it
         for client in clientsToBeRemoved:
-            self.logger.debug("************************* SWEEP removing udid %s *************************"%client.getUdid())
+            self.logger.debug("Client sweep removing udid %s"%client.getUdid())
             self.removeRegisteredClient(client)
 
         self.logger.debug("*** End of sweeping tags existing count %s***"%len(self.rClients))
