@@ -5,8 +5,8 @@ from collectionPointEvent import CollectionPointEvent
 import time
 from loggingEngine import LoggingEngine
 from threadsafeLogger import ThreadsafeLogger
-from cv2 import waitKey
 import msvcrt
+from select import select
 import configLoader
 
 # List of threads to handle
@@ -51,6 +51,7 @@ for moduleName in _collectionModuleNames:
 # For each collection module, import, initialize, and create an in/out queue
 for moduleName in _communicationModuleNames:
     try:
+        logger.debug('importing %s'%(moduleName))
         sys.path.append('./communication_modules/%s'%moduleName)
         _communicationModules[moduleName] = import_module('communication_modules.%s'%moduleName)
 
@@ -70,7 +71,7 @@ def sendOutboundEventMessage(msg):
     """
 
     #TODO: Define local channels
-
+    logger.debug('message: %s'%msg)
     for moduleName in _communicationModuleNames:
         if type(msg) is str or not msg.localOnly:
             queues[moduleName]['out'].put_nowait(msg)
@@ -97,13 +98,27 @@ def loadCollectionPoints():
     messages for each of them, and one queue for inbound messages. 
     """
     for moduleName in _collectionModuleNames:
-        logger.info('Loading collection module : %s'%moduleName)
-        thread = _collectionModules[moduleName].CollectionMethod(baseConfig, 
-                                                   queues[moduleName]['out'], 
-                                                   cpEventInboundChannel, 
-                                                   loggingQueue)
-        threads.append(thread)
-        thread.start()
+        try:
+            logger.info('Loading collection module : %s'%moduleName)
+            thread = _collectionModules[moduleName].CollectionMethod(baseConfig, 
+                                                    queues[moduleName]['out'], 
+                                                    cpEventInboundChannel, 
+                                                    loggingQueue)
+            threads.append(thread)
+            thread.start()
+
+        except Exception as e:
+            print(e)
+            logger.error('Error importing %s: %s'%(moduleName, e))
+
+def getch():
+    """ Returns a character from keyboard buffer. """
+    return sys.stdin.read(1)
+
+def kbhit():
+    """ Returns a non-zero integer if a key is in the keyboard buffer. """
+    dr,dw,de = select([sys.stdin], [], [], 0)
+    return dr
 
 def main():
     """ Main control logic. 
@@ -124,7 +139,6 @@ def main():
         if msvcrt.kbhit():
             ch = msvcrt.getwche()
             if ch == u'\x1b':
-                logger.info("Handing request to shutdown")
                 break
                 shutdown()
 

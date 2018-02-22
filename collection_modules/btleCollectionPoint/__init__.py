@@ -1,0 +1,1 @@
+from collectionPoint import BtleCollectionPoint as CollectionMethod
