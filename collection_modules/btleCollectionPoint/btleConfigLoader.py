@@ -60,6 +60,14 @@ def loadModule(thisConfig, logger, configParser):
         
 
     exit
+
+    try:
+        configValue=configParser.get('CollectionPointConfig','collection_point_id')
+    except:
+        configValue = "btle1"
+    logger.info("Collection point ID : %s" % configValue)
+    thisConfig['CollectionPointId'] = configValue
+
     """gateway type"""
     try:
         configValue=configParser.get('CollectionPointConfig','gateway_type')
@@ -67,6 +75,13 @@ def loadModule(thisConfig, logger, configParser):
         configValue = "proximity"
     logger.info("btle gateway type : %s" % configValue)
     thisConfig['GatewayType'] = configValue
+
+    try:
+        configValue=configParser.get('CollectionPointConfig','interface_type')
+    except:
+        configValue = "btle"
+    logger.info("interface : %s" % configValue)
+    thisConfig['InterfaceType'] = configValue
 
     """Proximity Event Interval In Milliseconds"""
     try:

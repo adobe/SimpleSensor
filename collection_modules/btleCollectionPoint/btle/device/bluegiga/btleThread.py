@@ -50,13 +50,13 @@ class BlueGigaBtleCollectionPointThread(Thread):
             # self.logger.debug("=============================== eventScanResponse START ===============================")
             try:
                 majorNumber = args["data"][26] | (args["data"][25] << 8)
-                self.logger.debug("majorNumber=%i"%majorNumber)
+                # self.logger.debug("majorNumber=%i"%majorNumber)
             except:
                 majorNumber = 0
 
             try:
                 minorNumber = args["data"][28] | (args["data"][27] << 8)
-                self.logger.debug("minorNumber=%i"%minorNumber)
+                # self.logger.debug("minorNumber=%i"%minorNumber)
             except:
                 minorNumber = 0
 

@@ -287,13 +287,19 @@ class CamCollectionPoint(Thread):
                             self.logger.info("SHUTDOWN command handled on %s" % __name__)
                             self.shutdown()
                         else:
-                            self.sendOutMessage(message)
+                            self.handleMessage(message)
                 except Exception as e:
                     self.logger.error("Unable to read queue, error: %s " %e)
                     self.shutdown()
                 self.logger.info("Queue size is %s after" % self.inQueue.qsize())
             else:
                 time.sleep(.25)
+
+    def handleMessage(self, message):
+        if message._topic == 'open-stream':
+            self._sendBlobs = True
+        elif message._topic == 'close-stream':
+            self._sendBlobs = False
        
     def putCPMessage(self, data, type):
         if type == "reset":
@@ -338,7 +344,7 @@ class CamCollectionPoint(Thread):
                 self._collectionPointType,
                 'blob',
                 eventExtraData,
-                True
+                False
             )
             self.outQueue.put(msg)
 

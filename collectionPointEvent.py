@@ -9,7 +9,7 @@ import datetime
 
 class CollectionPointEvent():
 
-    def __init__(self, cpid, cptype, topic, extendedData={}, localOnly=False):
+    def __init__(self, cpid, cptype, topic, extendedData={}, localOnly=False, recipients=['all']):
         self._cpid=cpid
         self._cptype=cptype
         self._topic=topic
