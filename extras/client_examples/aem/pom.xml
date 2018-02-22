@@ -44,6 +44,7 @@
 <modules>
     <module>modules/bundle</module>
     <module>modules/app</module>
+    <module>modules/site-content</module>
 </modules>
 
     <build>
