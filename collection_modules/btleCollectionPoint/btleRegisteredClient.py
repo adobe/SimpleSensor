@@ -6,6 +6,7 @@ import math
 import logging
 import logging.config
 from threadsafeLogger import ThreadsafeLogger
+from uidMap import UIDMap as UIDMap
 
 class BtleRegisteredClient:
     def __init__(self, detectedClient, collectionPointConfig, loggingQueue):
@@ -21,7 +22,10 @@ class BtleRegisteredClient:
         self.timeInCollectionPointInMilliseconds = 0
         self.firstRegisteredTime = time.time()
         self.collectionPointConfig = collectionPointConfig
-
+        try:
+            self.uidMap = UIDMap()
+        except Exception as e:
+            print('cant instantiate uid map: %s '%e)
         # Constants
         self._rssiClientInThresh = self.collectionPointConfig['BtleRssiClientInThreshold']
         self._rssiErrorVar = self.collectionPointConfig['BtleRssiErrorVariance']
@@ -30,12 +34,12 @@ class BtleRegisteredClient:
         # Initiate event when client is detected
         self.handleNewDetectedClientEvent(detectedClient)
 
-    #part of interface for Registered Client
+    # part of interface for Registered Client
     def updateWithNewDetectedClientData(self, detectedClient):
         self.timeInCollectionPointInMilliseconds = time.time() - self.firstRegisteredTime
         self.handleNewDetectedClientEvent(detectedClient)  #standard shared methods when we see a detected client
 
-    #Common methods are handled here for updateWithNewDetectedClientData and init
+    # Common methods are handled here for updateWithNewDetectedClientData and init
     def handleNewDetectedClientEvent(self, detectedClient):
         self.lastRegisteredTime = time.time()
         self.detectedClient = detectedClient
@@ -173,9 +177,9 @@ class BtleRegisteredClient:
         extraData['rssi'] = self.detectedClient.extraData['rssi']
         extraData['averageRssi'] = self.detectedClient.extraData['rssi']
         extraData['txPower'] = self.getTxPower()
-        #TODO INSTALL FIX
         extraData['beaconId'] = self.beaconId
         extraData['beaconMac'] = self.detectedClient.extraData["beaconMac"]
+        extraData['industry'] = self.uidMap.get(self.beaconId)
 
         return extraData
 

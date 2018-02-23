@@ -15,7 +15,6 @@ class DetectedClient:
             self.extraData['udid'] = self.udid
             self.extraData['tx'] = kwargs.get('tx',0)
             self.extraData['rssi'] = kwargs.get('rssi',0)
-        #we could add in over types here if needed
 
     def __str__(self):
         return "udid: {1} \n createTime: {2}".format(self.udid, self.createTime)

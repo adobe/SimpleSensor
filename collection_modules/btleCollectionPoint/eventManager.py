@@ -18,7 +18,6 @@ class EventManager(object):
         self.outBoundEventQueue = pOutBoundQueue
 
 
-
     def registerDetectedClient(self, detectedClient):
         self.logger.debug("Registering detected client %s"%detectedClient.extraData["beaconMac"])
         eClient = self.registeredClientRegistry.getRegisteredClient(detectedClient.extraData["beaconMac"])
@@ -84,6 +83,8 @@ class EventManager(object):
             self.collectionPointConfig['GatewayType'],
             eventType,
             registeredClient.getExtendedDataForEvent(),
+            False,
+            ['all'],
             registeredClient.lastRegisteredTime)
 
         if eventType == 'clientIn':

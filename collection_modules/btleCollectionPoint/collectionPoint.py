@@ -53,7 +53,7 @@ class BtleCollectionPoint(Thread):
         self.BLEThread.daemon = True
         self.BLEThread.start()
 
-        #Setup repeat task to run the sweep every X interval
+        # Setup repeat task to run the sweep every X interval
         self.repeatTimerSweepClients = RepeatedTimer((self._cleanupInterval/1000), self.registeredClientRegistry.sweepOldClients)
 
         # Process queue from main thread for shutdown messages
@@ -79,7 +79,7 @@ class BtleCollectionPoint(Thread):
                             self.logger.info("SHUTDOWN command handled on %s" % __name__)
                             self.shutdown()
                         else:
-                            self.sendOutMessage(message)
+                            self.handleMessage(message)
                 except Exception as e:
                     self.logger.error("Unable to read queue, error: %s " %e)
                     self.shutdown()
@@ -94,9 +94,12 @@ class BtleCollectionPoint(Thread):
             self.logger.debug("--- Found client end ---")
             self.eventManager.registerDetectedClient(client)
 
+    def handleMessage(self, msg):
+        # Handle incoming messages, eg. from other collection points
+        return
+
     def shutdown(self):
         self.logger.info("Shutting down")
-        # self.threadProcessQueue.join()
         self.repeatTimerSweepClients.stop()
         self.btleThread.stop()
         self.alive = False

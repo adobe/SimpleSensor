@@ -103,7 +103,7 @@ class WebsocketServerModule(Thread):
 
     def sendOutMessage(self, message):
         """ Send message to listening clients. """
-
+        print('!!~!!~!!!~!!!~!~!~!!!! sendout message: %s'%message)
         self.websocketServer.send_message_to_all(json.dumps(message.__dict__))
 
     def processQueue(self):
