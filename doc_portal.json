@@ -4,7 +4,7 @@
     "description": "poc of manifest for reading MD docs",
     "author": "David Benge",
     "portal-type":"gitbook",
-    "sections": [
+    "pages": [
         {
             "name":"SimpleSensor",
             "title":"SimpleSensor",
