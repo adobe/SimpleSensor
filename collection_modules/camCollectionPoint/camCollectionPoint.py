@@ -7,6 +7,7 @@ import numpy as np
 from idsWrapper import IdsWrapper
 from threadsafeLogger import ThreadsafeLogger
 from threading import Thread
+from multiprocessing import Process
 import io, base64
 import os
 from PIL import Image
@@ -14,7 +15,7 @@ from multiTracker import MultiTracker
 import camConfigLoader
 from azureImagePrediction import AzureImagePrediction
 
-class CamCollectionPoint(Thread):
+class CamCollectionPoint(Process):
 
     def __init__(self, baseConfig, pInBoundQueue, pOutBoundQueue, loggingQueue):
         """ Initialize new CamCollectionPoint instance.

@@ -6,7 +6,7 @@ date: 6/6/2017
 https://github.com/Pithikos/python-websocket-server
 
 """
-import multiprocessing
+from multiprocessing import Process
 import time
 from threading import Thread
 import sys
@@ -15,7 +15,7 @@ from websocket_server import WebsocketServer
 from threadsafeLogger import ThreadsafeLogger
 from ssmsg import SSMSG
 
-class WebsocketServerModule(Thread):
+class WebsocketServerModule(Process):
 
     def __init__(self, baseConfig, pInBoundEventQueue, pOutBoundEventQueue, loggingQueue):
 
@@ -80,7 +80,7 @@ class WebsocketServerModule(Thread):
         Join queue processing thread.
         """
 
-        self.logger.info("Shuting down websocket server %s" % (multiprocessing.current_process().name))
+        self.logger.info("Shuting down websocket server %s" % __name__)
 
         try:
             self.logger.info("Closing websocket")
@@ -103,7 +103,6 @@ class WebsocketServerModule(Thread):
 
     def sendOutMessage(self, message):
         """ Send message to listening clients. """
-        print('!!~!!~!!!~!!!~!~!~!!!! sendout message: %s'%message)
         self.websocketServer.send_message_to_all(json.dumps(message.__dict__))
 
     def processQueue(self):

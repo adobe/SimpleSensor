@@ -214,3 +214,6 @@ if __name__ == '__main__':
         main()
     else:
         logger.error("You need to run Python version 3.x!  Your trying to run this with major version %s" % python_version)
+
+    # Set multiprocessing start method
+    mp.set_start_method('fork')
