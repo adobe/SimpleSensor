@@ -5,9 +5,6 @@ from collectionPointEvent import CollectionPointEvent
 import time
 from loggingEngine import LoggingEngine
 from threadsafeLogger import ThreadsafeLogger
-import msvcrt
-import json
-from select import select
 import configLoader
 
 # List of threads to handle
@@ -94,7 +91,7 @@ def loadCommunicationChannels():
 
     for moduleName in _communicationModuleNames:
         logger.info('Loading communication module : %s'%moduleName)
-        thread = _communicationModules[moduleName].CommunicationMethod(baseConfig, 
+        thread = _communicationModules[moduleName].CommunicationModule(baseConfig, 
                                                    queues[moduleName]['out'], 
                                                    # queues[moduleName]['in'],
                                                    comEventInboundChannel, 
@@ -113,7 +110,7 @@ def loadCollectionPoints():
     for moduleName in _collectionModuleNames:
         try:
             logger.info('Loading collection module : %s'%moduleName)
-            thread = _collectionModules[moduleName].CollectionMethod(baseConfig, 
+            thread = _collectionModules[moduleName].CollectionModule(baseConfig, 
                                                     queues[moduleName]['out'], 
                                                     cpEventInboundChannel, 
                                                     loggingQueue)
@@ -123,15 +120,6 @@ def loadCollectionPoints():
         except Exception as e:
             print(e)
             logger.error('Error importing %s: %s'%(moduleName, e))
-
-def getch():
-    """ Returns a character from keyboard buffer. """
-    return sys.stdin.read(1)
-
-def kbhit():
-    """ Returns a non-zero integer if a key is in the keyboard buffer. """
-    dr,dw,de = select([sys.stdin], [], [], 0)
-    return dr
 
 def main():
     """ Main control logic. 
@@ -146,42 +134,38 @@ def main():
 
     logger.info("Loading collection points")
     loadCollectionPoints()
+    try:
+        while alive:
+            # Listen to inbound message queues for messages
+            if (cpEventInboundChannel.empty() == False):
+                try:
+                    message = cpEventInboundChannel.get(block=False, timeout=1)
+                    if message is not None:
+                        if message == "SHUTDOWN":
+                            logger.info("SHUTDOWN handled")
+                            shutdown()
+                        else:
+                            sendOutboundEventMessage(message)
+                except Exception as e:
+                    logger.error("Unable to read collection point queue : %s " %e)
 
-    while alive:
-        #TODO: Remove Windows dependency to catch esc key
-        if msvcrt.kbhit():
-            ch = msvcrt.getwche()
-            if ch == u'\x1b':
-                break
-                shutdown()
+            elif (comEventInboundChannel.empty() == False):
+                try:
+                    message = comEventInboundChannel.get(block=False, timeout=1)
+                    if message is not None:
+                        logger.info('Com message in main: %s'%message)
+                        if message == "SHUTDOWN":
+                            logger.info("SHUTDOWN handled")
+                            shutdown()
+                        else:
+                            sendOutboundEventMessage(message, message._recipients)
+                except Exception as e:
+                    logger.error("Unable to read communication channel queue : %s " %e)
+            else:
+                time.sleep(.25)
 
-        # Listen to inbound message queues for messages
-        if (cpEventInboundChannel.empty() == False):
-            try:
-                message = cpEventInboundChannel.get(block=False, timeout=1)
-                if message is not None:
-                    if message == "SHUTDOWN":
-                        logger.info("SHUTDOWN handled")
-                        shutdown()
-                    else:
-                        sendOutboundEventMessage(message)
-            except Exception as e:
-                logger.error("Unable to read collection point queue : %s " %e)
-
-        elif (comEventInboundChannel.empty() == False):
-            try:
-                message = comEventInboundChannel.get(block=False, timeout=1)
-                if message is not None:
-                    logger.info('Com message in main: %s'%message)
-                    if message == "SHUTDOWN":
-                        logger.info("SHUTDOWN handled")
-                        shutdown()
-                    else:
-                        sendOutboundEventMessage(message, message._recipients)
-            except Exception as e:
-                logger.error("Unable to read communication channel queue : %s " %e)
-        else:
-            time.sleep(.25)
+    except KeyboardInterrupt:
+        pass
 
     shutdown()
 

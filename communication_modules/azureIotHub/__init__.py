@@ -1,1 +1,1 @@
-from azureIotHubModule import AzureIotHubModule as CommunicationMethod
+from azureIotHubModule import AzureIotHubModule as CommunicationModule
