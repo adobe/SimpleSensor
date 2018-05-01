@@ -13,7 +13,7 @@ import sys
 import json
 from websocket_server import WebsocketServer
 from threadsafeLogger import ThreadsafeLogger
-from ssmsg import SSMSG
+from collectionPointMessage import CollectionPointMessage
 
 class WebsocketServerModule(Process):
 
@@ -66,7 +66,7 @@ class WebsocketServerModule(Process):
         self.logger.debug('Message received: %s'%message)
         # topic sender recipient extradata localonly
         message = json.loads(message)
-        _msg = SSMSG(
+        _msg = CollectionPointMessage(
             message['data']['_topic'], 
             message['data']['_sender'], 
             message['data']['_recipients'], 

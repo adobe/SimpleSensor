@@ -1,1 +1,1 @@
-from websocketServerModule import WebsocketServerModule as CommunicationMethod
+from websocketServerModule import WebsocketServerModule as CommunicationModule

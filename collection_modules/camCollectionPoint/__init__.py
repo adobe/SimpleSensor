@@ -1,1 +1,1 @@
-from camCollectionPoint import CamCollectionPoint as CollectionMethod
+from camCollectionPoint import CamCollectionPoint as CollectionModule

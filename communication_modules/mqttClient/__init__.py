@@ -1,1 +1,1 @@
-from mqttClientModule import MQTTClientModule as CommunicationMethod
+from mqttClientModule import MQTTClientModule as CommunicationModule

@@ -1,1 +1,1 @@
-from baseCollectionPoint import CollectionPoint as CollectionMethod
+from baseCollectionPoint import CollectionPoint as CollectionModule
