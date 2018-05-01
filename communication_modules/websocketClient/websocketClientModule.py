@@ -1,40 +1,33 @@
 """
-Websocket server for local event broadcast
-author: DaViD bEnGe + MaX
-date: 6/6/2017
-
-https://github.com/Pithikos/python-websocket-server
+Websocket client
+author: MaX 
+date: 4/10/2018
 
 """
-from multiprocessing import Process
+import multiprocessing
 import time
 from threading import Thread
 import sys
 import json
-from websocket_server import WebsocketServer
+import websocket
 from threadsafeLogger import ThreadsafeLogger
-from collectionPointMessage import CollectionPointMessage
-import moduleConfigLoader
 
-class WebsocketServerModule(Process):
+class WebsocketClientModule(Thread):
 
     def __init__(self, baseConfig, pInBoundEventQueue, pOutBoundEventQueue, loggingQueue):
 
-        super(WebsocketServerModule, self).__init__()
+        super(WebsocketClientModule, self).__init__()
         self.alive = True
         self.config = baseConfig
         self.inQueue = pInBoundEventQueue  # inQueue are messages from the main process to websocket clients
         self.outQueue = pOutBoundEventQueue  # outQueue are messages from clients to main process
-        self.websocketServer = None
+        self.websocketClient = None
         self.loggingQueue = loggingQueue
         self.threadProcessQueue = None
 
-        # Configs
-        self.moduleConfig = moduleConfigLoader.load(self.loggingQueue)
-
         # Constants
-        self._port = self.moduleConfig['WebsocketPort']
-        self._host = self.moduleConfig['WebsocketHost']
+        self._port = self.config['WebsocketPort']
+        self._host = self.config['WebsocketHost']
 
         # logging setup
         self.logger = ThreadsafeLogger(loggingQueue, __name__)
@@ -48,35 +41,40 @@ class WebsocketServerModule(Process):
         """
 
         self.logger.info("Starting websocket %s" % __name__)
-        self.websocketServer = WebsocketServer(self._port, host=self._host)
-        self.websocketServer.set_fn_new_client(self.newWebSocketClient)
-        self.websocketServer.set_fn_message_received(self.websocketMessageReceived)
-        self.alive = True
+        self.connect()
 
+    def listen(self):
         self.threadProcessQueue = Thread(target=self.processQueue)
         self.threadProcessQueue.setDaemon(True)
         self.threadProcessQueue.start()
 
-        self.websocketServer.run_forever()
+    def connect(self):
+        #websocket.enableTrace(True)
+        ws = websocket.WebSocketApp("ws://%s:%s"%(self._host, self._port),
+        on_message = self.onMessage,
+        on_error = self.onError,
+        on_close = self.onClose)
+        ws.on_open = self.onOpen
+        ws.run_forever()
 
-    def newWebSocketClient(self, client, server):
-        """ Client joined callback - called whenever a new client joins. """
+    def onError(self, ws, message):
+        self.logger.error("Error from websocket client: %s"%message)
 
-        self.logger.debug("Client joined")
+    def onClose(self, ws):
+        if self.alive:
+            self.logger.warn("Closed")
+            self.alive = False
+            # TODO: reconnect timer
+        else:
+            self.logger.info("Closed")
 
-    def websocketMessageReceived(self, client, server, message):
-        """ Message received callback - called whenever a new message is received. """
+    def onMessage(self, ws, message):
+        self.logger.info("Message from websocket server: %s"%message)
 
-        self.logger.debug('Message received: %s'%message)
-        # topic sender recipient extradata localonly
-        message = json.loads(message)
-        _msg = CollectionPointMessage(
-            message['data']['_topic'], 
-            message['data']['_sender'], 
-            message['data']['_recipients'], 
-            message['data']['_extraData'], 
-            False)
-        self.outQueue.put_nowait(_msg)
+    def onOpen(self, ws):
+        self.alive = True
+        self.websocketClient = ws
+        self.listen()
 
     def shutdown(self):
         """ Handle shutdown message. 
@@ -84,19 +82,13 @@ class WebsocketServerModule(Process):
         Join queue processing thread.
         """
 
-        self.logger.info("Shutting down websocket server %s" % __name__)
+        self.logger.info("Shutting down websocket server %s" % (multiprocessing.current_process().name))
 
         try:
             self.logger.info("Closing websocket")
-            self.websocketServer.server_close()
+            self.websocketClient.close()
         except Exception as e:
             self.logger.error("Websocket close error : %s " %e)
-
-        try:
-            self.logger.info("Shutdown websocket")
-            self.websocketServer.shutdown()
-        except Exception as e:
-            self.logger.error("Websocket shutdown error : %s " %e)
 
         self.alive = False
         
@@ -106,8 +98,9 @@ class WebsocketServerModule(Process):
         self.exit = True
 
     def sendOutMessage(self, message):
-        """ Send message to listening clients. """
-        self.websocketServer.send_message_to_all(json.dumps(message.__dict__))
+        """ Send message to server """
+
+        self.websocketClient.send(json.dumps(message.__dict__))
 
     def processQueue(self):
         """ Monitor queue of messages from main process to this thread. """

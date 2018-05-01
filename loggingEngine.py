@@ -1,15 +1,11 @@
 '''
-logging service
-author: DaViD bEnGe
-date: 9/7/2017
+Threadsafe logging engine
 '''
 import logging
 import logging.config
-from websocket_server import WebsocketServer
 import multiprocessing
 import time
 from threading import Thread
-import sys
 import os.path
 
 class LoggingEngine(Thread):
@@ -29,7 +25,7 @@ class LoggingEngine(Thread):
         """ Main thread entry point.
         Starts watching logging queue and printing to console
         """
-        self.logger.info("Starting %s" % (multiprocessing.current_process().name),extra={"loggername":"LoggingEngine"})
+        self.logger.info("Starting %s" % (__name__),extra={"loggername":"LoggingEngine"})
         self.alive = True
  
         #start up the queue read loop thread

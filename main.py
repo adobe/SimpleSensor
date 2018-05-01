@@ -3,12 +3,13 @@ import sys
 from importlib import import_module
 from collectionPointEvent import CollectionPointEvent
 import time
+from threading import Thread
 from loggingEngine import LoggingEngine
 from threadsafeLogger import ThreadsafeLogger
 import configLoader
 
 # List of threads to handle
-threads = []
+processes = []
 
 # Dict of threadsafe queues to handle
 queues = {}
@@ -19,7 +20,7 @@ logger = ThreadsafeLogger(loggingQueue, "main")
 
 # Logging output engine
 loggingEngine = LoggingEngine(loggingQueue=loggingQueue)
-threads.append(loggingEngine)
+processes.append(loggingEngine)
 loggingEngine.start()
 
 # Config
@@ -34,6 +35,43 @@ _communicationModules = {}
 cpEventOutboundChannel=mp.Queue()
 cpEventInboundChannel=mp.Queue()
 comEventInboundChannel=mp.Queue()
+
+def _find_getch():
+    """ Returns a getch function for the system in use. """
+    try:
+        import termios
+    except ImportError:
+        # Return Windows' getch
+        import msvcrt
+        return msvcrt.getch
+
+    # Create and return a getch that manipulates the tty
+    import tty
+    def _getch():
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(fd)
+            ch = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        return ch
+
+    return _getch
+
+getch = _find_getch()
+
+def processInput(toexit):
+    """ Process keystrokes, exit on esc key. """
+    ch = getch()
+    if ch == b'\x1b':
+        toexit.append(True)
+
+# Set up input thread to watch for esc key
+toExit=[]
+inputThread = Thread(target=processInput, args=(toExit,))
+inputThread.setDaemon(True)
+inputThread.start()
 
 # For each collection module, import, initialize
 for moduleName in _collectionModuleNames:
@@ -87,35 +125,29 @@ def sendOutboundEventMessage(msg, recipients=['all']):
                 logger.error('Error adding message to queue: %s'%e)
 
 def loadCommunicationChannels():
-    """ Create a thread for each communication channel specified in base.conf """
+    """ Create a process for each communication channel specified in base.conf """
 
     for moduleName in _communicationModuleNames:
         logger.info('Loading communication module : %s'%moduleName)
-        thread = _communicationModules[moduleName].CommunicationModule(baseConfig, 
+        proc = _communicationModules[moduleName].CommunicationModule(baseConfig, 
                                                    queues[moduleName]['out'], 
                                                    # queues[moduleName]['in'],
                                                    comEventInboundChannel, 
                                                    loggingQueue)
-        threads.append(thread)
-        thread.start()
+        processes.append(proc)
+        proc.start()
 
 def loadCollectionPoints():
-    """ Load collection points.
-    Currently loads and monitors only one collection point/queue.
-    May extend this to multiple collection points in the future.
-
-    If there are multiple collection points, use a unique queue for the outbound
-    messages for each of them, and one queue for inbound messages. 
-    """
+    """ Create a new process for each collection point module specified in base.conf """
     for moduleName in _collectionModuleNames:
         try:
             logger.info('Loading collection module : %s'%moduleName)
-            thread = _collectionModules[moduleName].CollectionModule(baseConfig, 
+            proc = _collectionModules[moduleName].CollectionModule(baseConfig, 
                                                     queues[moduleName]['out'], 
                                                     cpEventInboundChannel, 
                                                     loggingQueue)
-            threads.append(thread)
-            thread.start()
+            processes.append(proc)
+            proc.start()
 
         except Exception as e:
             print(e)
@@ -134,38 +166,33 @@ def main():
 
     logger.info("Loading collection points")
     loadCollectionPoints()
-    try:
-        while alive:
-            # Listen to inbound message queues for messages
-            if (cpEventInboundChannel.empty() == False):
-                try:
-                    message = cpEventInboundChannel.get(block=False, timeout=1)
-                    if message is not None:
-                        if message == "SHUTDOWN":
-                            logger.info("SHUTDOWN handled")
-                            shutdown()
-                        else:
-                            sendOutboundEventMessage(message)
-                except Exception as e:
-                    logger.error("Unable to read collection point queue : %s " %e)
+    while alive and not toExit:
+        # Listen to inbound message queues for messages
+        if (cpEventInboundChannel.empty() == False):
+            try:
+                message = cpEventInboundChannel.get(block=False, timeout=1)
+                if message is not None:
+                    if message == "SHUTDOWN":
+                        logger.info("SHUTDOWN handled")
+                        shutdown()
+                    else:
+                        sendOutboundEventMessage(message)
+            except Exception as e:
+                logger.error("Unable to read collection point queue : %s " %e)
 
-            elif (comEventInboundChannel.empty() == False):
-                try:
-                    message = comEventInboundChannel.get(block=False, timeout=1)
-                    if message is not None:
-                        logger.info('Com message in main: %s'%message)
-                        if message == "SHUTDOWN":
-                            logger.info("SHUTDOWN handled")
-                            shutdown()
-                        else:
-                            sendOutboundEventMessage(message, message._recipients)
-                except Exception as e:
-                    logger.error("Unable to read communication channel queue : %s " %e)
-            else:
-                time.sleep(.25)
-
-    except KeyboardInterrupt:
-        pass
+        elif (comEventInboundChannel.empty() == False):
+            try:
+                message = comEventInboundChannel.get(block=False, timeout=1)
+                if message is not None:
+                    if message == "SHUTDOWN":
+                        logger.info("SHUTDOWN handled")
+                        shutdown()
+                    else:
+                        sendOutboundEventMessage(message, message._recipients)
+            except Exception as e:
+                logger.error("Unable to read communication channel queue : %s " %e)
+        else:
+            time.sleep(.25)
 
     shutdown()
 
@@ -183,13 +210,26 @@ def shutdown():
     for moduleName in _collectionModuleNames:
         queues[moduleName]['out'].put_nowait("SHUTDOWN")
 
-    alive = False
-    
-    for t in threads:
-        t.join(timeout=1.0)
-
     loggingQueue.put_nowait("SHUTDOWN")
+
+    killProcesses()
+    alive = False
+
     sys.exit(0)
+
+def killProcesses():
+    """ Wait for each process to die until timeout is reached, then terminate. """
+    print('Killing processes...')
+    timeout = 5
+    for p in processes:
+        p_sec = 0
+        for second in range(timeout):
+            if p.is_alive():
+                time.sleep(1)
+                p_sec += 1
+        if p_sec >= timeout:
+            print('Terminating process %s'%p)
+            p.terminate()
 
 if __name__ == '__main__':
     """ Main entry point for running on cmd line. """

@@ -1,0 +1,1 @@
+from websocketClientModule import WebsocketClientModule as CommunicationMethod
