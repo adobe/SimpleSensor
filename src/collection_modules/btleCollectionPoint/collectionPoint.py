@@ -10,7 +10,7 @@ from registeredClientRegistry import RegisteredClientRegistry
 from repeatedTimer import RepeatedTimer
 from threading import Thread
 from src.threadsafeLogger import ThreadsafeLogger
-import btleConfigLoader as configLoader
+from src.collection_modules.btleCollectionPoint import moduleConfigLoader as configLoader
 
 class BtleCollectionPoint(Thread):
 
@@ -28,7 +28,7 @@ class BtleCollectionPoint(Thread):
         self.queueBLE = mp.Queue()
 
         # Configs
-        self.moduleConfig = configLoader.load(self.loggingQueue)
+        self.moduleConfig = configLoader.load(self.loggingQueue, __name__)
         self.config = baseConfig
 
         # Variables and objects

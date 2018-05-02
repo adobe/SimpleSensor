@@ -6,9 +6,9 @@ import os.path
 import json
 from src.threadsafeLogger import ThreadsafeLogger
 
-def load(loggingQueue):
+def load(loggingQueue, name):
     """ Load module specific config into dictionary, return it"""    
-    logger = ThreadsafeLogger(loggingQueue, "CamCollectionPoint")
+    logger = ThreadsafeLogger(loggingQueue, '{0}-{1}'.format(name, 'ConfigLoader'))
     thisConfig = {}
     configParser = configparser.ConfigParser()
 
@@ -48,7 +48,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """collection point type"""
     try:
-        configValue=configParser.getboolean('CollectionPointConfig','collection_point_type')
+        configValue=configParser.getboolean('ModuleConfig','collection_point_type')
     except:
         configValue = 'cam'
     logger.info("Collection point type : %s" % configValue)
@@ -56,7 +56,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """collection point id"""
     try:
-        configValue=configParser.getboolean('CollectionPointConfig','collection_point_id')
+        configValue=configParser.getboolean('ModuleConfig','collection_point_id')
     except:
         configValue = 'cam1'
     logger.info("Collection point ID : %s" % configValue)
@@ -64,7 +64,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """use ids camera"""
     try:
-        configValue=configParser.getboolean('CollectionPointConfig','use_ids_camera')
+        configValue=configParser.getboolean('ModuleConfig','use_ids_camera')
     except:
         configValue = False
     logger.info("Use IDS camera : %s" % configValue)
@@ -72,7 +72,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """primary target"""
     try:
-        configValue=configParser.get('CollectionPointConfig','primary_target')
+        configValue=configParser.get('ModuleConfig','primary_target')
     except:
         configValue = "closest"
     logger.info("Primary target : %s" % configValue)
@@ -80,7 +80,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """closest threshold"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','closest_threshold')
+        configValue=configParser.getint('ModuleConfig','closest_threshold')
     except:
         configValue = 2
     logger.info("Closest threshold : %s" % configValue)
@@ -88,7 +88,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """capture width"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','capture_width')
+        configValue=configParser.getint('ModuleConfig','capture_width')
     except:
         configValue = 1600
     logger.info("Capture width : %s" % configValue)
@@ -96,7 +96,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """capture height"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','capture_height')
+        configValue=configParser.getint('ModuleConfig','capture_height')
     except:
         configValue = 1200
     logger.info("Capture height : %s" % configValue)
@@ -104,7 +104,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """target face width"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','target_face_width')
+        configValue=configParser.getint('ModuleConfig','target_face_width')
     except:
         configValue = 150
     logger.info("Target face width : %s" % configValue)
@@ -112,7 +112,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """min face width"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','min_face_width')
+        configValue=configParser.getint('ModuleConfig','min_face_width')
     except:
         configValue = 120
     logger.info("Min face width : %s" % configValue)
@@ -120,7 +120,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """min face height"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','min_face_height')
+        configValue=configParser.getint('ModuleConfig','min_face_height')
     except:
         configValue = 120
     logger.info("Min face height : %s" % configValue)
@@ -128,7 +128,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """face pixel buffer"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','face_pixel_buffer')
+        configValue=configParser.getint('ModuleConfig','face_pixel_buffer')
     except:
         configValue = 40
     logger.info("Face pixel buffer : %s" % configValue)
@@ -136,7 +136,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """horizontal velocity buffer"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','horizontal_velocity_buffer')
+        configValue=configParser.getint('ModuleConfig','horizontal_velocity_buffer')
     except:
         configValue = 80
     logger.info("Horizontal velocity buffer : %s" % configValue)
@@ -144,7 +144,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """vertical velocity buffer"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','vertical_velocity_buffer')
+        configValue=configParser.getint('ModuleConfig','vertical_velocity_buffer')
     except:
         configValue = 60
     logger.info("Vertical velocity buffer : %s" % configValue)
@@ -152,7 +152,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """use velocity"""
     try:
-        configValue=configParser.getboolean('CollectionPointConfig','use_velocity')
+        configValue=configParser.getboolean('ModuleConfig','use_velocity')
     except:
         configValue = False
     logger.info("Use velocity : %s" % configValue)
@@ -160,7 +160,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """reset event timer"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','reset_event_timer')
+        configValue=configParser.getint('ModuleConfig','reset_event_timer')
     except:
         configValue = 10
     logger.info("Reset event timer : %s" % configValue)
@@ -168,7 +168,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """collection threshold"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','collection_threshold')
+        configValue=configParser.getint('ModuleConfig','collection_threshold')
     except:
         configValue = 2
     logger.info("Collection threshold : %s" % configValue)
@@ -176,7 +176,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """maximum people"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','maximum_people')
+        configValue=configParser.getint('ModuleConfig','maximum_people')
     except:
         configValue = 6
     logger.info("Maximum people : %s" % configValue)
@@ -184,7 +184,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """show video stream"""
     try:
-        configValue=configParser.getboolean('CollectionPointConfig','show_video_stream')
+        configValue=configParser.getboolean('ModuleConfig','show_video_stream')
     except:
         configValue = True
     logger.info("Show video stream : %s" % configValue)
@@ -192,7 +192,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """min nearest neighbors"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','min_nearest_neighbors')
+        configValue=configParser.getint('ModuleConfig','min_nearest_neighbors')
     except:
         configValue = 7
     logger.info("Min nearest neighbors : %s" % configValue)
@@ -200,7 +200,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """compression factor ids only"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','compression_factor')
+        configValue=configParser.getint('ModuleConfig','compression_factor')
     except:
         configValue = 9
     logger.info("IDS compression factor : %s" % configValue)
@@ -208,7 +208,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """pixel clock ids only"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','pixel_clock')
+        configValue=configParser.getint('ModuleConfig','pixel_clock')
     except:
         configValue = 18
     logger.info("IDS pixel clock : %s" % configValue)
@@ -216,7 +216,7 @@ def loadModule(thisConfig, logger, configParser):
 
     """bits per pixel"""
     try:
-        configValue=configParser.getint('CollectionPointConfig','bits_per_pixel')
+        configValue=configParser.getint('ModuleConfig','bits_per_pixel')
     except:
         configValue = 8
     logger.info("Bits per pixel : %s" % configValue)
@@ -224,21 +224,21 @@ def loadModule(thisConfig, logger, configParser):
 
     """send blob"""
     try:
-        configValue=configParser.getboolean('CollectionPointConfig','send_blobs')
+        configValue=configParser.getboolean('ModuleConfig','send_blobs')
     except:
         configValue = False
     logger.info("Send blob : %s" % configValue)
     thisConfig['SendBlobs'] = configValue
 
     try:
-        configValue=configParser.getint('CollectionPointConfig','blob_width')
+        configValue=configParser.getint('ModuleConfig','blob_width')
     except:
         configValue = 320
     logger.info("Blob width : %s" % configValue)
     thisConfig['BlobWidth'] = configValue
 
     try:
-        configValue=configParser.getint('CollectionPointConfig','blob_height')
+        configValue=configParser.getint('ModuleConfig','blob_height')
     except:
         configValue = 240
     logger.info("Blob height : %s" % configValue)

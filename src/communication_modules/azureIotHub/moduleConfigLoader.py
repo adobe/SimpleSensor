@@ -5,7 +5,7 @@ Module specific config
 import configparser
 import os.path
 import json
-from code.threadsafeLogger import ThreadsafeLogger
+from src.threadsafeLogger import ThreadsafeLogger
 
 def load(loggingQueue, name):
     """ Load module specific config into dictionary, return it"""    

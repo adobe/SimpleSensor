@@ -8,11 +8,11 @@ import optparse
 from pprint import pprint
 from serial import Serial
 from libs import BGLib
-from threadsafeLogger import ThreadsafeLogger
+from src.threadsafeLogger import ThreadsafeLogger
 
 class BtleThreadCollectionPoint(object):
 
-    def __init__(self,clientEventHandler,btleConfig,loggingQueue,debugMode=False):
+    def __init__(self, clientEventHandler, btleConfig, loggingQueue, debugMode=False):
         # Logger
         self.loggingQueue = loggingQueue
         self.logger = ThreadsafeLogger(loggingQueue, __name__)

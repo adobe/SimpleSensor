@@ -1,37 +1,40 @@
-"""
-Custom sensor logic
-author: DaViD bEnGe
-date: 6/9/2017
-
-"""
 import cv2
 from src.collectionPointEvent import CollectionPointEvent
 import time
 import sys
-import logging
 from src.threadsafeLogger import ThreadsafeLogger
 from threading import Thread
+from multiprocessing import Process
 
-class CollectionPoint(Thread):
+class CollectionPoint(Process):
     """ Sample class to show basic structure of collecting data and passing it to communication channels """
 
-    def __init__(self,baseConfig,pOutBoundEventQueue, pInBoundEventQueue, loggingQueue):
+    def __init__(self, baseConfig, pOutBoundEventQueue, pInBoundEventQueue, loggingQueue):
+
         # Standard initialization that most collection points would do
         super(CollectionPoint, self).__init__()
-        self.alive = True
-        self.config = baseConfig
+
         self.outBoundEventQueue = pOutBoundEventQueue
         self.inBoundEventQueue = pInBoundEventQueue
-        self.logger = ThreadsafeLogger(loggingQueue,__name__)
+
+        # Logger
+        self.logger = ThreadsafeLogger(loggingQueue, __name__)
 
         # Initialize collection point specific variables
         self.video = None
 
-        # Set constants from config
-        self._collectionPointId = self.config['CollectionPointId']
-        self._collectionPointType = self.config['CollectionPointType']
+        # Configs
+        self.config = baseConfig
+        self.moduleConfig = configLoader.load(self.loggingQueue, __name__)
+
+        # Constants
+        self._collectionPointId = self.moduleConfig['CollectionPointId']
+        self._collectionPointType = self.moduleConfig['CollectionPointType']
+        self._showVideoStream = self.moduleConfig['ShowVideoStream']
         self._testMode = self.config['TestMode']
 
+        # Declare module alive
+        self.alive = True
 
         if not self.check_opencv_version("3.",cv2):
             self.logger.critical("open CV is the wrong version {0}.  We require version 3.x".format(self.get_opencv_version()))
