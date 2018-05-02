@@ -50,4 +50,4 @@ pip-delete-this-directory.txt
 # Visual Studio
 .vscode
 
-/collection_modules/camSenseiCollectionPoint/**/*
+*/camSenseiCollectionPoint/
