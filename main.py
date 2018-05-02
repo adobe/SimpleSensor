@@ -1,12 +1,12 @@
 import multiprocessing as mp
 import sys
 from importlib import import_module
-from collectionPointEvent import CollectionPointEvent
+from dist.collectionPointEvent import CollectionPointEvent
 import time
 from threading import Thread
-from loggingEngine import LoggingEngine
-from threadsafeLogger import ThreadsafeLogger
-import configLoader
+from dist.loggingEngine import LoggingEngine
+from dist.threadsafeLogger import ThreadsafeLogger
+from dist import configLoader
 
 # List of threads to handle
 processes = []
@@ -76,8 +76,8 @@ inputThread.start()
 # For each collection module, import, initialize
 for moduleName in _collectionModuleNames:
     try:
-        sys.path.append('./collection_modules/%s'%moduleName)
-        _collectionModules[moduleName] = import_module('collection_modules.%s'%moduleName)
+        sys.path.append('./dist/collection_modules/%s'%moduleName)
+        _collectionModules[moduleName] = import_module('dist.collection_modules.%s'%moduleName)
 
         queues[moduleName] = {}
         # queues[moduleName]['in'] = mp.Queue()
@@ -89,8 +89,8 @@ for moduleName in _collectionModuleNames:
 for moduleName in _communicationModuleNames:
     try:
         logger.debug('importing %s'%(moduleName))
-        sys.path.append('./communication_modules/%s'%moduleName)
-        _communicationModules[moduleName] = import_module('communication_modules.%s'%moduleName)
+        sys.path.append('./dist/communication_modules/%s'%moduleName)
+        _communicationModules[moduleName] = import_module('dist.communication_modules.%s'%moduleName)
 
         queues[moduleName] = {}
         # queues[moduleName]['in'] = mp.Queue()
