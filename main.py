@@ -8,7 +8,7 @@ from src.loggingEngine import LoggingEngine
 from src.threadsafeLogger import ThreadsafeLogger
 from src import configLoader
 
-# List of threads to handle
+# List of processes to handle
 processes = []
 
 # Dict of threadsafe queues to handle
@@ -24,10 +24,12 @@ processes.append(loggingEngine)
 loggingEngine.start()
 
 # Config
-baseConfig = configLoader.load(logger)
+baseConfig = configLoader.load(loggingQueue, "main")
 
 _collectionModuleNames = baseConfig['CollectionModules']
+print('collectrion module names: ', _collectionModuleNames)
 _communicationModuleNames = baseConfig['CommunicationModules']
+print('communication module names: ', _communicationModuleNames)
 _collectionModules = {}
 _communicationModules = {}
 
@@ -76,6 +78,7 @@ inputThread.start()
 # For each collection module, import, initialize
 for moduleName in _collectionModuleNames:
     try:
+        logger.debug('importing %s'%(moduleName))
         sys.path.append('./src/collection_modules/%s'%moduleName)
         _collectionModules[moduleName] = import_module('src.collection_modules.%s'%moduleName)
 
@@ -166,6 +169,7 @@ def main():
 
     logger.info("Loading collection points")
     loadCollectionPoints()
+
     while alive and not toExit:
         # Listen to inbound message queues for messages
         if (cpEventInboundChannel.empty() == False):

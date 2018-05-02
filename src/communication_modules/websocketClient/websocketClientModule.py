@@ -32,7 +32,6 @@ class WebsocketClientModule(Thread):
         # Constants
         self._port = self.moduleConfig['WebsocketPort']
         self._host = self.moduleConfig['WebsocketHost']
-        print('client port: ', self._port)
 
         # logging setup
         self.logger = ThreadsafeLogger(loggingQueue, __name__)

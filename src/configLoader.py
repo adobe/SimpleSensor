@@ -4,13 +4,16 @@ Main config loader
 import configparser
 import os.path
 import json
+from src.threadsafeLogger import ThreadsafeLogger
 
 baseConfig = {}
 configParser = configparser.ConfigParser()
 configFilePath = None
 
-def load(logger):
+def load(loggingQueue, name):
     """ Build dictionary of config values, return it """
+    logger = ThreadsafeLogger(loggingQueue, '{0}-{1}'.format(name, 'ConfigLoader'))
+
     loadBase(logger)
     loadSecrets(logger)
     return baseConfig
@@ -18,23 +21,23 @@ def load(logger):
 def loadSecrets(logger):
     """ Load secrets.conf into baseConfig"""
     try:
-        with open("/secrets.conf") as f:
+        with open("./config/secrets.conf") as f:
             configParser.readfp(f)
             configFilePath = "/secrets.conf"
     except IOError:
-        configParser.read(os.path.join(os.path.dirname(__file__),"config/secrets.conf"))
-        configFilePath = os.path.join(os.path.dirname(__file__),"config/secrets.conf")
+        configParser.read(os.path.join(os.path.dirname(__file__),"./config/secrets.conf"))
+        configFilePath = os.path.join(os.path.dirname(__file__),"./config/secrets.conf")
         exit
 
 def loadBase(logger):
     """ Load base.conf into baseConfig"""
     try:
-        with open("/base.conf") as f:
+        with open("./config/base.conf") as f:
             configParser.readfp(f)
-            configFilePath = "/base.conf"
+            configFilePath = "./config/base.conf"
     except IOError:
-        configParser.read(os.path.join(os.path.dirname(__file__),"config/base.conf"))
-        configFilePath = os.path.join(os.path.dirname(__file__),"config/base.conf")
+        configParser.read(os.path.join(os.path.dirname(__file__),"./config/base.conf"))
+        configFilePath = os.path.join(os.path.dirname(__file__),"./config/base.conf")
         exit
 
     """Test mode"""

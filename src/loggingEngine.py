@@ -10,15 +10,15 @@ import os.path
 
 class LoggingEngine(Thread):
 
-    def __init__(self,loggingQueue):
+    def __init__(self, loggingQueue):
         super(LoggingEngine, self).__init__()
         self.alive = True
         self.queue = loggingQueue
 
         try:
-            logging.config.fileConfig("/logging.conf")
+            logging.config.fileConfig("./config/logging.conf")
         except:
-            logging.config.fileConfig(os.path.join(os.path.dirname(__file__),"config/logging.conf"))
+            logging.config.fileConfig(os.path.join(os.path.dirname(__file__),"./config/logging.conf"))
         self.logger = logging.getLogger('main')
 
     def run(self):
