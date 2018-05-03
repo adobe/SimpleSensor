@@ -1,19 +1,25 @@
-import cv2
-from src.collectionPointEvent import CollectionPointEvent
-import time
-from datetime import datetime
-import sys
-import numpy as np
-from idsWrapper import IdsWrapper
-from src.threadsafeLogger import ThreadsafeLogger
-from threading import Thread
-from multiprocessing import Process
-import io, base64
-import os
-from PIL import Image
-from multiTracker import MultiTracker
-from azureImagePrediction import AzureImagePrediction
+"""
+CamCollectionPoint
+Events with face demographic data when a new face is detected and becomes the focal object.
+Tracks faces as they move, sending only one event per fresh detection.
+Sends reset event when no faces are detected for some time set in config.
+"""
 from src.collection_modules.camCollectionPoint import moduleConfigLoader as configLoader
+from src.collectionPointEvent import CollectionPointEvent
+from azureImagePredictor import AzureImagePredictor
+from src.threadsafeLogger import ThreadsafeLogger
+from multiTracker import MultiTracker
+from multiprocessing import Process
+from idsWrapper import IdsWrapper
+from datetime import datetime
+from threading import Thread
+from PIL import Image
+import base64
+import time
+import sys
+import cv2
+import io
+import os
 
 class CamCollectionPoint(Process):
 
@@ -43,7 +49,7 @@ class CamCollectionPoint(Process):
         self.config = baseConfig
 
         # Prediction engine
-        self.imagePredictionEngine = AzureImagePrediction(moduleConfig=self.moduleConfig, loggingQueue=loggingQueue)
+        self.imagePredictionEngine = AzureImagePredictor(moduleConfig=self.moduleConfig, loggingQueue=loggingQueue)
 
         # Constants
         self._useIdsCamera = self.moduleConfig['UseIdsCamera']

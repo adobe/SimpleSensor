@@ -1,10 +1,10 @@
 '''
 Main config loader
 '''
+
+from src.threadsafeLogger import ThreadsafeLogger
 import configparser
 import os.path
-import json
-from src.threadsafeLogger import ThreadsafeLogger
 
 baseConfig = {}
 configParser = configparser.ConfigParser()

@@ -1,14 +1,10 @@
+from src.threadsafeLogger import ThreadsafeLogger
 from detectedClient import DetectedClient
-import os
-import sys
+from uidMap import UIDMap as UIDMap
 import time
 import math
-import logging
-import logging.config
-from src.threadsafeLogger import ThreadsafeLogger
-from uidMap import UIDMap as UIDMap
 
-class BtleRegisteredClient:
+class BtleRegisteredClient(object):
     def __init__(self, detectedClient, collectionPointConfig, loggingQueue):
         self.loggingQueue = loggingQueue
         self.logger = ThreadsafeLogger(loggingQueue, __name__)

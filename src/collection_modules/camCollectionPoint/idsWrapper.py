@@ -1,15 +1,14 @@
 """
+IdsWrapper
 IDS camera DLL wrapper
-author: MaX EdeLL
-date: 13/37/2017
 """
 
-from ctypes import *
-from platform import architecture
-import numpy as np
-from idsConsts import *
 from src.threadsafeLogger import ThreadsafeLogger
+from platform import architecture
 from threading import Thread
+from idsConsts import *
+from ctypes import *
+import numpy as np
 import time
 
 class IdsWrapper(object):

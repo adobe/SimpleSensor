@@ -1,10 +1,6 @@
-import os
-import os.path
-import logging
-import logging.config
 from btleRegisteredClient import BtleRegisteredClient
-import time
 from src.threadsafeLogger import ThreadsafeLogger
+import time
 
 class RegistryEvent(object):
 

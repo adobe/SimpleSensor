@@ -1,23 +1,25 @@
 """
-Websocket client
-author: MaX 
-date: 4/10/2018
-
+WebsocketClientModule
+Connects to websocket server host/port as defined in config.
+Attempts reconnects on disconnection.
 """
-import multiprocessing
-import time
-from threading import Thread
-import sys
-import json
-import websocket
+from src.communication_modules.websocketClient import moduleConfigLoader as configLoader
 from src.threadsafeLogger import ThreadsafeLogger
-from src.communication_modules.websocketClient import moduleConfigLoader as moduleConfigLoader
+from threading import Thread
+from multiprocessing import Process
+import websocket
+import time
+import json
 
-class WebsocketClientModule(Thread):
+
+
+
+class WebsocketClientModule(Process):
 
     def __init__(self, baseConfig, pInBoundEventQueue, pOutBoundEventQueue, loggingQueue):
 
         super(WebsocketClientModule, self).__init__()
+        
         self.alive = True
         self.config = baseConfig
         self.inQueue = pInBoundEventQueue  # inQueue are messages from the main process to websocket clients
@@ -27,7 +29,7 @@ class WebsocketClientModule(Thread):
         self.threadProcessQueue = None
 
         # Configs
-        self.moduleConfig = moduleConfigLoader.load(self.loggingQueue, __name__)
+        self.moduleConfig = configLoader.load(self.loggingQueue, __name__)
 
         # Constants
         self._port = self.moduleConfig['WebsocketPort']
@@ -44,7 +46,7 @@ class WebsocketClientModule(Thread):
         Starts thread to monitor inbound message queue.
         """
 
-        self.logger.info("Starting websocket %s" % __name__)
+        self.logger.info("Starting %s" % __name__)
         self.connect()
 
     def listen(self):
@@ -62,7 +64,7 @@ class WebsocketClientModule(Thread):
         ws.run_forever()
 
     def onError(self, ws, message):
-        self.logger.error("Error from websocket client: %s"%message)
+        self.logger.error("Error callback fired, message: %s"%message)
 
     def onClose(self, ws):
         if self.alive:
@@ -86,7 +88,7 @@ class WebsocketClientModule(Thread):
         Join queue processing thread.
         """
 
-        self.logger.info("Shutting down websocket server %s" % (multiprocessing.current_process().name))
+        self.logger.info("Shutting down %s"%__name__)
 
         try:
             self.logger.info("Closing websocket")

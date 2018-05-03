@@ -1,12 +1,17 @@
-import multiprocessing as mp
-import sys
-from importlib import import_module
+"""
+Main
+Program entrypoint. Run with `python main.py`.
+"""
+
 from src.collectionPointEvent import CollectionPointEvent
-import time
-from threading import Thread
-from src.loggingEngine import LoggingEngine
 from src.threadsafeLogger import ThreadsafeLogger
+from src.loggingEngine import LoggingEngine
+from importlib import import_module
+import multiprocessing as mp
 from src import configLoader
+from threading import Thread
+import time
+import sys
 
 # List of processes to handle
 processes = []

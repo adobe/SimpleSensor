@@ -1,10 +1,14 @@
-import cv2
+"""
+CollectionPoint
+Sample collection point that detects faces and events to all channels when one is detected.
+"""
+
 from src.collectionPointEvent import CollectionPointEvent
-import time
-import sys
 from src.threadsafeLogger import ThreadsafeLogger
-from threading import Thread
 from multiprocessing import Process
+from threading import Thread
+import time
+import cv2
 
 class CollectionPoint(Process):
     """ Sample class to show basic structure of collecting data and passing it to communication channels """
@@ -37,7 +41,7 @@ class CollectionPoint(Process):
         self.alive = True
 
         if not self.check_opencv_version("3.",cv2):
-            self.logger.critical("open CV is the wrong version {0}.  We require version 3.x".format(self.get_opencv_version()))
+            self.logger.critical("open CV is the wrong version {0}.  We require version 3.x".format(self.get_opencv_version(cv2)))
 
     def run(self):
         """ Sample run function for a collection point class.
@@ -118,8 +122,10 @@ class CollectionPoint(Process):
         time.sleep(1)
         self.exit = True
 
-    def get_opencv_version(self):
-        import cv2 as lib
+    def get_opencv_version(self, lib=None):
+        if lib is None:
+            import cv2 as lib
+            
         return lib.__version__
 
     def check_opencv_version(self,major, lib=None):

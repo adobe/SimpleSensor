@@ -1,9 +1,6 @@
 """
-Common event to send out about activity from this collection point
-author: DaViD bEnGe
-date: 6/9/2017
-
-TODO: define this object better
+CollectionPointEvent
+Common class to send out activity events from a collection point to communication channels.
 """
 import datetime
 
@@ -15,7 +12,8 @@ class CollectionPointEvent():
         self._topic=topic
         self._eventTime='{0}'.format(eventTime)
         self._extendedData=extendedData
-        self._localOnly=localOnly #this flag triggers the scope of broadcast, some events we dont want to send everywhere and just want to echo to local websocket
+        # Defines scope of broadcast, localOnly == True means only send along low cost channels
+        self._localOnly=localOnly
 
     @property
     def cpid(self):

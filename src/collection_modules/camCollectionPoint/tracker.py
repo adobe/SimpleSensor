@@ -1,12 +1,11 @@
 """
+Tracker
 Tracker implementation
-author: MaX EdeLL
-date: 13/37/2017
 """
 
-import cv2
 from src.threadsafeLogger import ThreadsafeLogger
 from time import time
+import cv2
 
 class Tracker():
 	def __init__(self, bbox, frame, kind, moduleConfig, loggingQueue):

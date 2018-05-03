@@ -1,14 +1,22 @@
-from src.threadsafeLogger import ThreadsafeLogger
-from abstractImagePrediction import AbstractImagePrediction
-import urllib.parse, base64, json, requests
-import logging
+"""
+AzureImagePredictor
+ImagePredictor implementation for Azure Face API
+"""
 
-class AzureImagePrediction(AbstractImagePrediction):
+from src.threadsafeLogger import ThreadsafeLogger
+from imagePredictor import ImagePredictor
+import urllib.parse
+import json
+import requests
+# import logging
+
+class AzureImagePredictor(ImagePredictor):
     def __init__(self, moduleConfig=None, loggingQueue=None):
-        """ Initialize new AzureImagePrediction instance.
+        """ 
+        Initialize new AzureImagePrediction instance.
         Set parameters required by Azure Face API.
         """
-        logging.basicConfig(level=logging.CRITICAL)
+        # logging.basicConfig(level=logging.CRITICAL)
         self.logger = ThreadsafeLogger(loggingQueue, "AzureImagePrediction") # Setup logging queue
         self.config = moduleConfig
 

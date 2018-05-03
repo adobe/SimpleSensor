@@ -1,16 +1,15 @@
 import sys
-import json
-import time
-import multiprocessing as mp
-sys.path.append('./collection_modules/btleCollectionPoint/libs')
 sys.path.append('./collection_modules/btleCollectionPoint/devices/bluegiga')
-from eventManager import EventManager
+sys.path.append('./collection_modules/btleCollectionPoint/libs')
+from src.collection_modules.btleCollectionPoint import moduleConfigLoader as configLoader
 from devices.bluegiga.btleThread import BlueGigaBtleCollectionPointThread
 from registeredClientRegistry import RegisteredClientRegistry
-from repeatedTimer import RepeatedTimer
-from threading import Thread
 from src.threadsafeLogger import ThreadsafeLogger
-from src.collection_modules.btleCollectionPoint import moduleConfigLoader as configLoader
+from repeatedTimer import RepeatedTimer
+from eventManager import EventManager
+from threading import Thread
+import multiprocessing as mp
+import time
 
 class BtleCollectionPoint(Thread):
 

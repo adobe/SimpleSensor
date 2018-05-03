@@ -1,17 +1,20 @@
 '''
-Threadsafe logging engine
+LoggingEngine
+Loads logging module config from file, reads logging messages from all threads and outputs them to stdout.
 '''
+from threading import Thread
+import multiprocessing
 import logging
 import logging.config
-import multiprocessing
 import time
-from threading import Thread
 import os.path
 
 class LoggingEngine(Thread):
 
     def __init__(self, loggingQueue):
+
         super(LoggingEngine, self).__init__()
+        
         self.alive = True
         self.queue = loggingQueue
 
@@ -25,7 +28,7 @@ class LoggingEngine(Thread):
         """ Main thread entry point.
         Starts watching logging queue and printing to console
         """
-        self.logger.info("Starting %s" % (__name__),extra={"loggername":"LoggingEngine"})
+        self.logger.info("Starting %s" % (__name__), extra={"loggername":"LoggingEngine"})
         self.alive = True
  
         #start up the queue read loop thread

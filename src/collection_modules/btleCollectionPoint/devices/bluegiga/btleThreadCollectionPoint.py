@@ -1,14 +1,14 @@
-# This work is based on the following effort
-#
-# https://github.com/jrowberg/bglib/blob/master/Python/Examples/bled112_scanner.py
-#
-#
+"""
+BtleThreadCollectionPoint
+BTLE thread collection point.
 
-import optparse
-from pprint import pprint
+Ref: https://github.com/jrowberg/bglib/blob/master/Python/Examples/bled112_scanner.py
+"""
+
+from src.threadsafeLogger import ThreadsafeLogger
 from serial import Serial
 from libs import BGLib
-from src.threadsafeLogger import ThreadsafeLogger
+
 
 class BtleThreadCollectionPoint(object):
 

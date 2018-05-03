@@ -1,10 +1,9 @@
 """
-Multi tracker implementation - with some tricks to make low frame rate work a bit better
-author: MaX EdeLL
-date: 13/37/2017
+MultiTracker
+Multi tracker implementation, with some tricks to make low frame rate work a bit better
 """
-from tracker import Tracker
 from src.threadsafeLogger import ThreadsafeLogger
+from tracker import Tracker
 from time import time
 
 class MultiTracker(object):

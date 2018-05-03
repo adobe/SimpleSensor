@@ -51,13 +51,10 @@ class WebsocketServerModule(Process):
         self.websocketServer = WebsocketServer(self._port, host=self._host)
         self.websocketServer.set_fn_new_client(self.newWebSocketClient)
         self.websocketServer.set_fn_message_received(self.websocketMessageReceived)
-        self.alive = True
-
-        self.threadProcessQueue = Thread(target=self.processQueue)
-        self.threadProcessQueue.setDaemon(True)
-        self.threadProcessQueue.start()
-
         self.websocketServer.run_forever()
+
+        self.listen()
+        self.alive = True
 
     def newWebSocketClient(self, client, server):
         """ Client joined callback - called whenever a new client joins. """
@@ -77,6 +74,11 @@ class WebsocketServerModule(Process):
             message['data']['_extraData'], 
             False)
         self.outQueue.put_nowait(_msg)
+
+    def listen(self):
+        self.threadProcessQueue = Thread(target=self.processQueue)
+        self.threadProcessQueue.setDaemon(True)
+        self.threadProcessQueue.start()
 
     def shutdown(self):
         """ Handle shutdown message. 
