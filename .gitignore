@@ -11,6 +11,7 @@ logs/*.log.*
 
 secrets.conf
 config/secrets.conf
+*/secrets.conf
 
 face_detect_log/*
 
