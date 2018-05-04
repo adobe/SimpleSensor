@@ -13,9 +13,21 @@ setup(
     long_description=readme,
     author='',
     author_email='',
-    packages=['src', 'src.main', 'src.cli', 'src.collection_modules', 'src.communication_modules'],
+    packages=[  'simplesensor', 
+                'simplesensor.shared', 
+                'simplesensor.cli', 
+                'simplesensor.collection_modules', 
+                'simplesensor.collection_modules.camCollectionPoint',
+                'simplesensor.communication_modules', 
+                'simplesensor.communication_modules.websocketServer'
+                ],
+    package_data= {
+                    'simplesensor': ['config/*.conf'],
+                    'simplesensor.collection_modules.camCollectionPoint': ['config/*.conf', 'classifiers/haarcascades/*.xml'],
+                    'simplesensor.communication_modules.websocketServer': ['config/*.conf']
+                    },
     install_requires=required,
     entry_points = {
-        'console_scripts': ['scly=src.cli.main:main']
+        'console_scripts': ['scly=simplesensor.cli.main:main']
     }
 )

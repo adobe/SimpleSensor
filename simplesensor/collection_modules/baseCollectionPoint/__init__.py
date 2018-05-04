@@ -1,0 +1,1 @@
+from simplesensor.collection_modules.baseCollectionPoint.baseCollectionPoint import CollectionPoint as CollectionModule
