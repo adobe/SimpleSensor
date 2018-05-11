@@ -4,7 +4,7 @@ with open('README.md') as readme_file:
     readme = readme_file.read()
 
 # Dependencies
-required = ['requests']
+required = ['requests==2.14.2']
 
 setup(
     name='SimpleSensor',
@@ -18,6 +18,7 @@ setup(
                 'simplesensor.cli', 
                 'simplesensor.collection_modules', 
                 'simplesensor.collection_modules.camCollectionPoint',
+                'simplesensor.collection_modules.btleCollectionPoint',
                 'simplesensor.communication_modules', 
                 'simplesensor.communication_modules.websocketServer'
                 ],

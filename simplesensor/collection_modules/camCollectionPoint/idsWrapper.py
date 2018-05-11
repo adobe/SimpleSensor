@@ -3,7 +3,7 @@ IdsWrapper
 IDS camera DLL wrapper
 """
 
-from simplesensor.threadsafeLogger import ThreadsafeLogger
+from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
 from platform import architecture
 from threading import Thread
 from .idsConsts import *

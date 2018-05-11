@@ -13,8 +13,8 @@ from threading import Thread
 import sys
 import json
 from websocket_server import WebsocketServer
-from simplesensor.threadsafeLogger import ThreadsafeLogger
-from simplesensor.collectionPointMessage import CollectionPointMessage
+from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
+from simplesensor.shared.collectionPointMessage import CollectionPointMessage
 from simplesensor.communication_modules.websocketServer import moduleConfigLoader as configLoader
 
 class WebsocketServerModule(Process):

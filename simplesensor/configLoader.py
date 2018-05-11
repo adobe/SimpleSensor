@@ -2,7 +2,7 @@
 Main config loader
 '''
 
-from simplesensor.threadsafeLogger import ThreadsafeLogger
+from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
 import configparser
 import os.path
 

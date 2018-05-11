@@ -3,8 +3,8 @@ Main
 Program entrypoint. Run with `python main.py`.
 """
 
-from simplesensor.collectionPointEvent import CollectionPointEvent
-from simplesensor.threadsafeLogger import ThreadsafeLogger
+from simplesensor.shared.collectionPointEvent import CollectionPointEvent
+from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
 from simplesensor.loggingEngine import LoggingEngine
 from importlib import import_module
 import multiprocessing as mp
@@ -84,19 +84,19 @@ inputThread.start()
 
 # For each collection module, import, initialize
 for moduleName in _collectionModuleNames:
-    try:
-        logger.debug('importing %s'%(moduleName))
-        # sys.path.append(os.path.abspath('./src/collection_modules/%s'%moduleName))
-        # print('sys.path2: ', sys.path)
-        # print('dir(src): ', dir(src))
-        # _collectionModules[moduleName] = import_module('src.collection_modules.%s'%'CollectionModule')
-        _collectionModules[moduleName] = import_module('simplesensor.collection_modules.%s'%moduleName)
+    # try:
+    logger.debug('importing %s'%(moduleName))
+    # sys.path.append(os.path.abspath('./src/collection_modules/%s'%moduleName))
+    # print('sys.path2: ', sys.path)
+    # print('dir(src): ', dir(src))
+    # _collectionModules[moduleName] = import_module('src.collection_modules.%s'%'CollectionModule')
+    _collectionModules[moduleName] = import_module('simplesensor.collection_modules.%s'%moduleName)
 
-        queues[moduleName] = {}
-        # queues[moduleName]['in'] = mp.Queue()
-        queues[moduleName]['out'] = mp.Queue()
-    except Exception as e:
-        logger.error('Error importing %s: %s'%(moduleName, e))
+    queues[moduleName] = {}
+    # queues[moduleName]['in'] = mp.Queue()
+    queues[moduleName]['out'] = mp.Queue()
+    # except Exception as e:
+        # logger.error('Error importing %s: %s'%(moduleName, e))
 
 # For each collection module, import, initialize, and create an in/out queue
 for moduleName in _communicationModuleNames:

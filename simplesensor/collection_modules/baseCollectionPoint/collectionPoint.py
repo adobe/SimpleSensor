@@ -3,8 +3,8 @@ CollectionPoint
 Sample collection point that detects faces and events to all channels when one is detected.
 """
 
-from simplesensor.collectionPointEvent import CollectionPointEvent
-from simplesensor.threadsafeLogger import ThreadsafeLogger
+from simplesensor.shared.collectionPointEvent import CollectionPointEvent
+from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
 from multiprocessing import Process
 from threading import Thread
 import time

@@ -5,9 +5,9 @@ Tracks faces as they move, sending only one event per fresh detection.
 Sends reset event when no faces are detected for some time set in config.
 """
 from simplesensor.collection_modules.camCollectionPoint import moduleConfigLoader as configLoader
-from simplesensor.collectionPointEvent import CollectionPointEvent
+from simplesensor.shared.collectionPointEvent import CollectionPointEvent
 from .azureImagePredictor import AzureImagePredictor
-from simplesensor.threadsafeLogger import ThreadsafeLogger
+from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
 from .multiTracker import MultiTracker
 from multiprocessing import Process
 from .idsWrapper import IdsWrapper

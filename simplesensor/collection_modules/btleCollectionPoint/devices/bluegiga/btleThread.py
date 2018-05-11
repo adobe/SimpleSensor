@@ -9,7 +9,7 @@ import platform
 from threading import Thread
 from btleThreadCollectionPoint import BtleThreadCollectionPoint
 from detectedClient import DetectedClient
-from simplesensor.threadsafeLogger import ThreadsafeLogger
+from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
 
 class BlueGigaBtleCollectionPointThread(Thread):
 

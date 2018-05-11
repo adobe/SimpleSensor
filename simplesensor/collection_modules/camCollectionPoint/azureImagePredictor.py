@@ -3,7 +3,7 @@ AzureImagePredictor
 ImagePredictor implementation for Azure Face API
 """
 
-from simplesensor.threadsafeLogger import ThreadsafeLogger
+from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
 from .imagePredictor import ImagePredictor
 import urllib.parse
 import json

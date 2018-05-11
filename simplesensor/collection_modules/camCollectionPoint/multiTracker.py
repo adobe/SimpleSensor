@@ -2,7 +2,7 @@
 MultiTracker
 Multi tracker implementation, with some tricks to make low frame rate work a bit better
 """
-from simplesensor.threadsafeLogger import ThreadsafeLogger
+from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
 from .tracker import Tracker
 from time import time
 
