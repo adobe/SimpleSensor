@@ -3,6 +3,7 @@ CLI install controller
 """
 from git import Repo
 import os, shutil, stat, errno
+from .config import configure_module
 
 def install(args):
 	CONTRIB_URL = 'https://github.com/AdobeAtAdobe/SimpleSensor_contrib.git'
@@ -44,20 +45,29 @@ def install(args):
 
 		# Move module dir to correct folder
 		camel_name = to_camel_case(args.name)
-		shutil.move(
-			os.path.join(DIR_PATH, '%s_modules'%args.type, camel_name),
-			os.path.abspath(os.path.join(DIR_PATH, '../'))
-			)
+		MODULE_PATH = os.path.abspath(os.path.join(DIR_PATH, '../'))
+		try:
+			shutil.move(
+				os.path.join(DIR_PATH, '%s_modules'%args.type, camel_name),
+				MODULE_PATH
+				)
+		except Exception as e:
+			print("Error moving module: %s."%e)
+			print(e.__class__.__name__)
 
 		# Delete the repo
 		try:
 			shutil.rmtree(DIR_PATH, ignore_errors=False, onerror=remove_readonly)
 		except Exception as e:
-			print("Error: Unable to delete temporary module path `%s`. Try deleting it manually."%DIR_PATH)
+			print('Error deleting module path: ', e)
+			print("Error deleting temporary module path `%s`. Try deleting it manually."%DIR_PATH)
 
 		# Configure module
+		MODULE_DIR = os.path.join(MODULE_PATH, camel_name)
+		configure_module(args.name, args.type, MODULE_DIR)
 
 def checkout_branch(repo, origin, branch_name):
+	""" Create a new head and checkout the branch called branch_name (--name argument) """
 	try:
 		repo.create_head(branch_name, origin.refs[branch_name])
 		repo.heads[branch_name].set_tracking_branch(origin.refs[branch_name])

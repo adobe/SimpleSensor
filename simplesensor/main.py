@@ -34,7 +34,7 @@ loggingEngine.start()
 baseConfig = configLoader.load(loggingQueue, "main")
 
 _collectionModuleNames = baseConfig['CollectionModules']
-print('collectrion module names: ', _collectionModuleNames)
+print('collection module names: ', _collectionModuleNames)
 _communicationModuleNames = baseConfig['CommunicationModules']
 print('communication module names: ', _communicationModuleNames)
 _collectionModules = {}

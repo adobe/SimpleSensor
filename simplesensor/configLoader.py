@@ -5,6 +5,7 @@ Main config loader
 from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
 import configparser
 import os.path
+import json
 
 baseConfig = {}
 configParser = configparser.ConfigParser()
@@ -15,13 +16,13 @@ def load(loggingQueue, name):
     logger = ThreadsafeLogger(loggingQueue, '{0}-{1}'.format(name, 'ConfigLoader'))
 
     loadBase(logger)
-    loadSecrets(logger)
+    # loadSecrets(logger)
     return baseConfig
 
 def loadSecrets(logger):
     """ Load secrets.conf into baseConfig"""
     try:
-        with open("./config/secrets.conf") as f:
+        with open(os.path.join(os.path.dirname(__file__), 'config', 'secrets.conf')) as f:
             configParser.readfp(f)
             configFilePath = "/secrets.conf"
     except IOError:
@@ -32,10 +33,11 @@ def loadSecrets(logger):
 def loadBase(logger):
     """ Load base.conf into baseConfig"""
     try:
-        with open("./config/base.conf") as f:
+        with open(os.path.join(os.path.dirname(__file__), 'config', 'base.conf')) as f:
             configParser.readfp(f)
             configFilePath = "./config/base.conf"
-    except IOError:
+    except Exception as e:
+        print('failed: ', e)
         configParser.read(os.path.join(os.path.dirname(__file__),"./config/base.conf"))
         configFilePath = os.path.join(os.path.dirname(__file__),"./config/base.conf")
         exit
@@ -54,7 +56,8 @@ def loadBase(logger):
     try:
         strVal = configParser.get('BaseConfig', 'collection_modules')
         val = json.loads(strVal)
-    except:
+    except Exception as e:
+        print('failed2: ', e)
         strVal = 'camCollectionPoint'
         val = [strVal]
     baseConfig['CollectionModules'] = val

@@ -19,7 +19,6 @@ class LoggingEngine(Thread):
         self.queue = loggingQueue
 
         try:
-            print('os.path.dirname: ', os.path.dirname(__file__))
             conf_path = os.path.join(os.path.dirname(__file__), 'config', 'logging.conf')
             print('conf path: ', conf_path)
             logging.config.fileConfig(conf_path)

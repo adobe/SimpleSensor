@@ -3,6 +3,7 @@ CLI Main
 
 """
 from .install import install
+from .config import config
 import argparse
 
 def get_parser():
@@ -20,6 +21,11 @@ def get_parser():
 
     help_parser = subparsers.add_parser('help', help='Show help')
 
+    config_parser = subparsers.add_parser('config', help='Configure an installed module')
+    config_parser.set_defaults(func=config)
+    config_parser.add_argument('--name', action='store')
+    config_parser.add_argument('--type', action='store')
+
     return parser
 
 def cli_start(args):
@@ -29,13 +35,14 @@ def cli_start(args):
 def main():
     parser = get_parser()
     args = parser.parse_args()
-    print("SimpleSensor CLI doesn't do anything yet :(")
     print('args: ', args)
     if args.command == 'help':
         parser.print_help()
     elif args.command == "install" :
         args.func(args)
     elif args.command == 'start':
+        args.func(args)
+    elif args.command == 'config':
         args.func(args)
     else:
         parser.print_help()
