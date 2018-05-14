@@ -3,7 +3,6 @@ CLI Main
 
 """
 from .install import install
-from .start import start
 import argparse
 
 def get_parser():
@@ -11,15 +10,21 @@ def get_parser():
     subparsers = parser.add_subparsers(help='commands', dest='command')
 
     start_parser = subparsers.add_parser('start', help='Start SimpleSensor')
-    start_parser.set_defaults(func=start)
+    start_parser.set_defaults(func=cli_start)
 
     install_parser = subparsers.add_parser('install', help='Install extra modules')
     install_parser.set_defaults(func=install)
-    install_parser.add_argument('--src', action='store')
+    install_parser.add_argument('--source', action='store')
+    install_parser.add_argument('--name', action='store')
+    install_parser.add_argument('--type', action='store')
 
     help_parser = subparsers.add_parser('help', help='Show help')
 
     return parser
+
+def cli_start(args):
+    from .start import start
+    start(args)
 
 def main():
     parser = get_parser()
