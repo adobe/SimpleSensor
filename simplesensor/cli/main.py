@@ -1,7 +1,7 @@
 """
-CLI Main
-
+CLI main entry point
 """
+
 from .install import install
 from .config import config
 import argparse
@@ -35,7 +35,6 @@ def cli_start(args):
 def main():
     parser = get_parser()
     args = parser.parse_args()
-    print('args: ', args)
     if args.command == 'help':
         parser.print_help()
     elif args.command == "install" :

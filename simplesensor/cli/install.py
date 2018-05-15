@@ -4,33 +4,35 @@ CLI install controller
 from git import Repo
 import os, shutil, stat, errno
 from .config import configure_module
+import logging
 
 def install(args):
 	CONTRIB_URL = 'https://github.com/AdobeAtAdobe/SimpleSensor_contrib.git'
+	logger = logging.getLogger(__name__)
 
 	if args.name is None:
-		print("Error: Must provide a module name" +
+		logger.error("Error: Must provide a module name" +
 			"(ie. `--name module-name`)")
 	elif args.type is None:
-		print("Error: Must provide a module type" +
+		logger.error("Error: Must provide a module type" +
 		 "(ie. `--type communication` or `--type collection`)")
 	elif str(args.type) != "communication" and str(args.type) != "collection":
-		print("Error: Invalid module type `%s`."%args.type +
+		logger.error("Error: Invalid module type `%s`."%args.type +
 			"Only `collection` and `communication` supported.")
 	else:
 		if args.source is not None:
-			print("Source param set, overriding with source `%s`"%args.source)
+			logger.error("Source param set, overriding with source `%s`"%args.source)
 			CONTRIB_URL = args.source
 
 		DIR_NAME = args.name
 		DIR_PATH = os.path.abspath(os.path.join(__file__,'../../%s_modules/%s'%(args.type, args.name)))
 
-		print('Installing module "%s" to %s'%(DIR_NAME, DIR_PATH))
+		logger.info('Installing module "%s" to %s'%(DIR_NAME, DIR_PATH))
 
 		if os.path.isdir(DIR_PATH):
 			# shutil.rmtree(DIR_NAME)
-			print("Directory exists, requirement might already be satisfied." +
-				"Try deleting `%s` or updating module manually."%DIR_PATH)
+			logger.warn("Directory exists, requirement might already be satisfied." +
+				"If not, try deleting directory `%s`."%DIR_PATH)
 			exit()
 
 		os.mkdir(DIR_PATH)
@@ -52,15 +54,14 @@ def install(args):
 				MODULE_PATH
 				)
 		except Exception as e:
-			print("Error moving module: %s."%e)
-			print(e.__class__.__name__)
+			logger.error("Error moving module: %s."%e)
+			logger.error(e.__class__.__name__)
 
 		# Delete the repo
 		try:
 			shutil.rmtree(DIR_PATH, ignore_errors=False, onerror=remove_readonly)
 		except Exception as e:
-			print('Error deleting module path: ', e)
-			print("Error deleting temporary module path `%s`. Try deleting it manually."%DIR_PATH)
+			logger.error("Error deleting temporary module path `%s`. Try deleting it manually."%DIR_PATH)
 
 		# Configure module
 		MODULE_DIR = os.path.join(MODULE_PATH, camel_name)
@@ -68,12 +69,13 @@ def install(args):
 
 def checkout_branch(repo, origin, branch_name):
 	""" Create a new head and checkout the branch called branch_name (--name argument) """
+	logger = logging.getLogger(__name__)
 	try:
 		repo.create_head(branch_name, origin.refs[branch_name])
 		repo.heads[branch_name].set_tracking_branch(origin.refs[branch_name])
 		repo.heads[branch_name].checkout()
 	except Exception as e:
-		print("Error: %s"%e)
+		logger.error("Error: %s"%e)
 
 def to_camel_case(hyphenated):
 	""" Convert hyphen broken string to camel case. """
