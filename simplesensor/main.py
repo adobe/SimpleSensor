@@ -1,6 +1,8 @@
 """
 Main
-Program entrypoint. Run with `python main.py`.
+Program entrypoint. 
+Can be run with `python main.py`
+Or through the CLI with `scly run` after installing.
 """
 
 from simplesensor.shared.collectionPointEvent import CollectionPointEvent
@@ -21,29 +23,35 @@ processes = []
 # Dict of threadsafe queues to handle
 queues = {}
 
+# Define a single inbound message queue for each of the module types.
+# These are shared among modules since the messages should come in order.
+# The main process (main.py) handles forwarding inbound messages to the correct recipient(s).
+queues['cpInbound']=mp.Queue()
+queues['comInbound']=mp.Queue()
+
 # Logging queue setup
-loggingQueue = mp.Queue()
-logger = ThreadsafeLogger(loggingQueue, "main")
+queues['logging'] = mp.Queue()
+logger = ThreadsafeLogger(queues['logging'], "main")
 
 # Logging output engine
-loggingEngine = LoggingEngine(loggingQueue=loggingQueue)
+loggingEngine = LoggingEngine(loggingQueue=queues['logging'])
 processes.append(loggingEngine)
 loggingEngine.start()
 
 # Config
-baseConfig = configLoader.load(loggingQueue, "main")
+baseConfig = configLoader.load(queues['logging'], "main")
 
 _collectionModuleNames = baseConfig['CollectionModules']
-print('collection module names: ', _collectionModuleNames)
 _communicationModuleNames = baseConfig['CommunicationModules']
-print('communication module names: ', _communicationModuleNames)
+if len(_collectionModuleNames)==0 or len(_communicationModules)==0:
+    logger.warn('Without at least one of each communication and' 
+        + 'collection modules active, SimpleSensor does not do much.'
+        + 'Use command `scly config --name base` to configure modules.'
+        + 'Use command `scly install --name <some_branch> --type <communication/collection>` '
+        + 'to install a module. See https://github.com/AdobeAtAdobe/SimpleSensor/blob/master/README.md'
+        + 'for more details.')
 _collectionModules = {}
 _communicationModules = {}
-
-# Collection point queues
-cpEventOutboundChannel=mp.Queue()
-cpEventInboundChannel=mp.Queue()
-comEventInboundChannel=mp.Queue()
 
 def _find_getch():
     """ Returns a getch function for the system in use. """
@@ -84,30 +92,24 @@ inputThread.start()
 
 # For each collection module, import, initialize
 for moduleName in _collectionModuleNames:
-    # try:
-    logger.debug('importing %s'%(moduleName))
-    # sys.path.append(os.path.abspath('./src/collection_modules/%s'%moduleName))
-    # print('sys.path2: ', sys.path)
-    # print('dir(src): ', dir(src))
-    # _collectionModules[moduleName] = import_module('src.collection_modules.%s'%'CollectionModule')
-    _collectionModules[moduleName] = import_module('simplesensor.collection_modules.%s'%moduleName)
+    try:
+        logger.debug('importing %s'%(moduleName))
+        _collectionModules[moduleName] = import_module('simplesensor.collection_modules.%s'%moduleName)
 
-    queues[moduleName] = {}
-    # queues[moduleName]['in'] = mp.Queue()
-    queues[moduleName]['out'] = mp.Queue()
-    # except Exception as e:
-        # logger.error('Error importing %s: %s'%(moduleName, e))
+        queues[moduleName] = {}
+        # Each module has it's own incoming message queue (outbound from main proc)
+        # This is for cases where messages should be handled by specific modules, not all.
+        queues[moduleName]['out'] = mp.Queue()
+    except Exception as e:
+        logger.error('Error importing %s: %s'%(moduleName, e))
 
 # For each collection module, import, initialize, and create an in/out queue
 for moduleName in _communicationModuleNames:
     try:
         logger.debug('importing %s'%(moduleName))
-        # sys.path.append('./src/communication_modules/%s'%moduleName)
         _communicationModules[moduleName] = import_module('simplesensor.communication_modules.%s'%moduleName)
 
         queues[moduleName] = {}
-        # queues[moduleName]['in'] = mp.Queue()
-        # queues[moduleName]['in'] = comEventInboundChannel
         queues[moduleName]['out'] = mp.Queue()
     except Exception as e:
         logger.error('Error importing %s: %s'%(moduleName, e))
@@ -143,9 +145,8 @@ def loadCommunicationChannels():
         logger.info('Loading communication module : %s'%moduleName)
         proc = _communicationModules[moduleName].CommunicationModule(baseConfig, 
                                                    queues[moduleName]['out'], 
-                                                   # queues[moduleName]['in'],
-                                                   comEventInboundChannel, 
-                                                   loggingQueue)
+                                                   queues['comInbound'], 
+                                                   queues['logging'])
         processes.append(proc)
         proc.start()
 
@@ -156,8 +157,8 @@ def loadCollectionPoints():
             logger.info('Loading collection module : %s'%moduleName)
             proc = _collectionModules[moduleName].CollectionModule(baseConfig, 
                                                     queues[moduleName]['out'], 
-                                                    cpEventInboundChannel, 
-                                                    loggingQueue)
+                                                    queues['cpInbound'], 
+                                                    queues['logging'])
             processes.append(proc)
             proc.start()
 
@@ -223,7 +224,7 @@ def shutdown():
     for moduleName in _collectionModuleNames:
         queues[moduleName]['out'].put_nowait("SHUTDOWN")
 
-    loggingQueue.put_nowait("SHUTDOWN")
+    queues['logging'].put_nowait("SHUTDOWN")
 
     killProcesses()
     alive = False
