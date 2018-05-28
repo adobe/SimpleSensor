@@ -6,6 +6,7 @@ import os, shutil, stat, errno
 from .config import configure_module
 import logging
 import pip
+import time
 
 def install(args):
 	CONTRIB_URL = 'https://github.com/AdobeAtAdobe/SimpleSensor_contrib.git'
@@ -67,9 +68,10 @@ def install(args):
 
 		# Delete the repo
 		try:
+			repo.git.clear_cache()
+			repo.close()
 			shutil.rmtree(TEMP_DIR_PATH, ignore_errors=False, onerror=remove_readonly)
 		except Exception as e:
-			print('error from delete: ', e)
 			logger.error("Error deleting temporary module path `%s`. Try deleting it manually."%TEMP_DIR_PATH)
 
 		MODULE_DIR = os.path.join(MODULE_PATH, args.name)
@@ -97,12 +99,11 @@ def to_camel_case(hyphenated):
 
 def remove_readonly(func, path, exc):
 	""" Clear the readonly bit and reattempt the removal """
-	excvalue = exc[1]
-	if func in (os.rmdir, os.remove) and excvalue.errno == errno.EACCES:
-		os.chmod(path, stat.S_IRWXU| stat.S_IRWXG| stat.S_IRWXO) # 0777
+	try:
+		os.chmod(path, stat.S_IWRITE)
 		func(path)
-	else:
-		raise
+	except Exception as e:
+		print('Error removing readonly: ', e)
 
 def install_requirements(req_file):
 	""" Parse `requirements.txt` line by line and install each requirement.
