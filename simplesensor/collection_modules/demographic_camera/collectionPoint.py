@@ -4,7 +4,7 @@ Events with face demographic data when a new face is detected and becomes the fo
 Tracks faces as they move, sending only one event per fresh detection.
 Sends reset event when no faces are detected for some time set in config.
 """
-from simplesensor.collection_modules.demographic_camera import moduleConfigLoader as configLoader
+from . import moduleConfigLoader as configLoader
 from simplesensor.shared.collectionPointEvent import CollectionPointEvent
 from .azureImagePredictor import AzureImagePredictor
 from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
@@ -204,11 +204,9 @@ class CollectionPoint(Process):
         buff = io.BytesIO()
         img.save(buff, format="JPEG")
 
-        try:
-            predictions = self.imagePredictionEngine.getPrediction(buff.getvalue())
-        except Exception as e:
-            predictions = False
-
+        predictions = self.imagePredictionEngine.getPrediction(buff.getvalue())
+        if 'error' in predictions:
+            return False
         return predictions
     
     def validTracker(self, x, y, w, h):

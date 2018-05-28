@@ -10,7 +10,7 @@ import json
 from websocket_server import WebsocketServer
 from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
 from simplesensor.shared.collectionPointMessage import CollectionPointMessage
-from simplesensor.communication_modules.websocket_server import moduleConfigLoader as configLoader
+from . import moduleConfigLoader as configLoader
 
 class WebsocketServerModule(Process):
     def __init__(self, baseConfig, pInBoundEventQueue, pOutBoundEventQueue, loggingQueue):
@@ -42,14 +42,14 @@ class WebsocketServerModule(Process):
         Starts thread to monitor inbound message queue.
         """
 
-        self.logger.info("Starting websocket %s" % __name__)
+        self.logger.info("Starting websocket server")
+
+        self.listen()
+
         self.websocketServer = WebsocketServer(self._port, host=self._host)
         self.websocketServer.set_fn_new_client(self.newWebSocketClient)
         self.websocketServer.set_fn_message_received(self.websocketMessageReceived)
         self.websocketServer.run_forever()
-
-        self.listen()
-        self.alive = True
 
     def newWebSocketClient(self, client, server):
         """ Client joined callback - called whenever a new client joins. """
@@ -71,6 +71,7 @@ class WebsocketServerModule(Process):
         self.outQueue.put_nowait(_msg)
 
     def listen(self):
+        self.alive = True
         self.threadProcessQueue = Thread(target=self.processQueue)
         self.threadProcessQueue.setDaemon(True)
         self.threadProcessQueue.start()
@@ -81,7 +82,7 @@ class WebsocketServerModule(Process):
         Join queue processing thread.
         """
 
-        self.logger.info("Shutting down websocket server %s" % __name__)
+        self.logger.info("Shutting down websocket server")
 
         try:
             self.logger.info("Closing websocket")
