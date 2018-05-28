@@ -2,7 +2,7 @@
 Main
 Program entrypoint. 
 Can be run with `python main.py`
-Or through the CLI with `scly run` after installing.
+Or through the CLI with `scly start` after installing.
 """
 
 from simplesensor.shared.collectionPointEvent import CollectionPointEvent
@@ -43,7 +43,7 @@ baseConfig = configLoader.load(queues['logging'], "main")
 
 _collectionModuleNames = baseConfig['CollectionModules']
 _communicationModuleNames = baseConfig['CommunicationModules']
-if len(_collectionModuleNames)==0 or len(_communicationModules)==0:
+if len(_collectionModuleNames)==0 or len(_communicationModuleNames)==0:
     logger.warn('Without at least one of each communication and' 
         + 'collection modules active, SimpleSensor does not do much.'
         + 'Use command `scly config --name base` to configure modules.'
@@ -142,13 +142,17 @@ def loadCommunicationChannels():
     """ Create a process for each communication channel specified in base.conf """
 
     for moduleName in _communicationModuleNames:
-        logger.info('Loading communication module : %s'%moduleName)
-        proc = _communicationModules[moduleName].CommunicationModule(baseConfig, 
-                                                   queues[moduleName]['out'], 
-                                                   queues['comInbound'], 
-                                                   queues['logging'])
-        processes.append(proc)
-        proc.start()
+        try:
+            logger.info('Loading communication module : %s'%moduleName)
+            proc = _communicationModules[moduleName].CommunicationModule(baseConfig, 
+                                                       queues[moduleName]['out'], 
+                                                       queues['comInbound'], 
+                                                       queues['logging'])
+            processes.append(proc)
+            proc.start()
+
+        except Exception as e:
+            logger.error('Error importing %s: %s'%(moduleName, e))
 
 def loadCollectionPoints():
     """ Create a new process for each collection point module specified in base.conf """
@@ -182,9 +186,9 @@ def main():
 
     while alive and not toExit:
         # Listen to inbound message queues for messages
-        if (cpEventInboundChannel.empty() == False):
+        if (queues['cpInbound'].empty() == False):
             try:
-                message = cpEventInboundChannel.get(block=False, timeout=1)
+                message = queues['cpInbound'].get(block=False, timeout=1)
                 if message is not None:
                     if message == "SHUTDOWN":
                         logger.info("SHUTDOWN handled")
@@ -194,9 +198,9 @@ def main():
             except Exception as e:
                 logger.error("Unable to read collection point queue : %s " %e)
 
-        elif (comEventInboundChannel.empty() == False):
+        elif (queues['comInbound'].empty() == False):
             try:
-                message = comEventInboundChannel.get(block=False, timeout=1)
+                message = queues['comInbound'].get(block=False, timeout=1)
                 if message is not None:
                     if message == "SHUTDOWN":
                         logger.info("SHUTDOWN handled")
@@ -245,17 +249,6 @@ def killProcesses():
             print('Terminating process %s'%p)
             p.terminate()
 
-if __name__ == '__main__':
-    """ Main entry point for running on cmd line. """
-    python_version = sys.version_info.major
-    if python_version == 3:
-        main()
-    else:
-        logger.error("You need to run Python version 3.x!  Your trying to run this with major version %s" % python_version)
-
-    # Set multiprocessing start method
-    mp.set_start_method('fork')
-
 def start():
     """ Main entry point for running on cmd line. """
     python_version = sys.version_info.major
@@ -266,3 +259,7 @@ def start():
 
     # Set multiprocessing start method
     mp.set_start_method('fork')
+
+if __name__ == '__main__':
+    """ Main entry point for running on cmd line. """
+    start()

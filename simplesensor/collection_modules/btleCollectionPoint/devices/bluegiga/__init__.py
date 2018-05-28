@@ -1,1 +1,0 @@
-from btleThreadCollectionPoint import BtleThreadCollectionPoint

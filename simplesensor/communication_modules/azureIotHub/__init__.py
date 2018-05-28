@@ -1,1 +1,0 @@
-from simplesensor.communication_modules.azureIotHub.azureIotHubModule import AzureIotHubModule as CommunicationModule

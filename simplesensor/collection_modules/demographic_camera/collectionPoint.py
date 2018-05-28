@@ -4,7 +4,7 @@ Events with face demographic data when a new face is detected and becomes the fo
 Tracks faces as they move, sending only one event per fresh detection.
 Sends reset event when no faces are detected for some time set in config.
 """
-from simplesensor.collection_modules.camCollectionPoint import moduleConfigLoader as configLoader
+from simplesensor.collection_modules.demographic_camera import moduleConfigLoader as configLoader
 from simplesensor.shared.collectionPointEvent import CollectionPointEvent
 from .azureImagePredictor import AzureImagePredictor
 from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
@@ -21,14 +21,14 @@ import cv2
 import io
 import os
 
-class CamCollectionPoint(Process):
+class CollectionPoint(Process):
 
     def __init__(self, baseConfig, pInBoundQueue, pOutBoundQueue, loggingQueue):
         """ Initialize new CamCollectionPoint instance.
         Setup queues, variables, configs, predictionEngines, constants and loggers.
         """
 
-        super(CamCollectionPoint, self).__init__()
+        super(CollectionPoint, self).__init__()
 
         if not self.check_opencv_version("3.", cv2):
             print("OpenCV version {0} is not supported. Use 3.x for best results.".format(self.get_opencv_version()))

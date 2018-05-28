@@ -1,2 +1,0 @@
-azure-iothub-device-client==1.1.22.0
-azure-iothub-service-client==1.1.0.20

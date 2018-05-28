@@ -1,13 +1,14 @@
 """
-Threaded MQTT client
+MQTT client module
 """
-from simplesensor.communication_modules.websocketClient import moduleConfigLoader as configLoader
-from simplesensor.threadsafeLogger import ThreadsafeLogger
-import paho.mqtt.client as mqtt
-from threading import Thread
+
 import logging
 import time
 import json
+from threading import Thread
+import paho.mqtt.client as mqtt
+from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
+from . import moduleConfigLoader as configLoader
 
 class MQTTClientModule(Thread):
     """ Threaded MQTT client for processing and publishing outbound messages"""
@@ -19,7 +20,7 @@ class MQTTClientModule(Thread):
         self.alive = True
         self.inQueue = pInBoundEventQueue
 
-        # Configs
+        # Module config
         self.moduleConfig = configLoader.load(self.loggingQueue, __name__)
 
         # Constants
@@ -30,7 +31,6 @@ class MQTTClientModule(Thread):
         self._host = self.moduleConfig['MqttHost']
         self._port = self.moduleConfig['MqttPort']
         self._publishJson = self.moduleConfig['MqttPublishJson']
-        self._publishFaceValues = self.moduleConfig['MqttPublishFaceValues']
 
         # MQTT setup
         self._client = mqtt.Client()
@@ -91,7 +91,6 @@ class MQTTClientModule(Thread):
     def publishFaceValues(self, message):
         """ Publish face detection values to individual MQTT feeds
         Parses _extendedData.predictions.faceAttributes property
-        Works with Azure face API responses and 
         """
         try:
             for face in message._extendedData['predictions']:
@@ -123,7 +122,7 @@ class MQTTClientModule(Thread):
         return json.dumps(message.__dict__).encode('utf8')
 
     def processQueue(self):
-        self.logger.info('Processing queue')
+        """ Process incoming messages. """
 
         while self.alive:
             # Pump the loop
@@ -150,7 +149,7 @@ class MQTTClientModule(Thread):
                 time.sleep(.25)
 
     def shutdown(self):
-        self.logger.info("Shutting down MQTT %s" % (mp.current_process().name))
+        self.logger.info("Shutting down")
         self.alive = False
         time.sleep(1)
         self.exit = True

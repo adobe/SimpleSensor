@@ -1,1 +1,0 @@
-from simplesensor.collection_modules.camCollectionPoint.camCollectionPoint import CamCollectionPoint as CollectionModule

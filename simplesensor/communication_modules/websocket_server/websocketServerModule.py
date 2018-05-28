@@ -1,10 +1,5 @@
 """
-Websocket server for local event broadcast
-author: DaViD bEnGe + MaX
-date: 6/6/2017
-
-https://github.com/Pithikos/python-websocket-server
-
+Websocket server communication module
 """
 
 from multiprocessing import Process
@@ -15,7 +10,7 @@ import json
 from websocket_server import WebsocketServer
 from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
 from simplesensor.shared.collectionPointMessage import CollectionPointMessage
-from simplesensor.communication_modules.websocketServer import moduleConfigLoader as configLoader
+from simplesensor.communication_modules.websocket_server import moduleConfigLoader as configLoader
 
 class WebsocketServerModule(Process):
     def __init__(self, baseConfig, pInBoundEventQueue, pOutBoundEventQueue, loggingQueue):

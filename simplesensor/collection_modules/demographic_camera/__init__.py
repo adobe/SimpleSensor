@@ -1,0 +1,1 @@
+from simplesensor.collection_modules.demographic_camera.collectionPoint import CollectionPoint as CollectionModule
