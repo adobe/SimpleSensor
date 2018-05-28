@@ -33,10 +33,13 @@ def configure_module(module_name, module_type, module_dir):
 	Have user enter their config values, or default if none chosen.
 	"""
 	MODULE_CONF = os.path.join(module_dir, 'config', 'module.conf')
-	SECRETS_CONF = os.path.join(module_dir, 'config', 'secrets.conf')
-
+	SECRETS_CONF_OUT = os.path.join(module_dir, 'config', 'secrets.conf')
+	# if `secrets.conf` already exists, use that file as the template, or use `secrets.conf.example`
+	if os.path.isfile(SECRETS_CONF_OUT):
+		SECRETS_CONF_IN = os.path.join(module_dir, 'config', 'secrets.conf')
+	else:
+		SECRETS_CONF_IN = os.path.join(module_dir, 'config', 'secrets.conf.example')
 	# First, try to configure module
-	# if not os.path.isdir(MODULE_DIR):
 	try:
 		with open(MODULE_CONF, 'r') as f:
 			configs = f.readlines()
@@ -57,7 +60,7 @@ def configure_module(module_name, module_type, module_dir):
 				if not config.startswith('#') and not (config.startswith('[') and config.endswith(']')):
 					# split line by colon and let user set parameter
 					csplit = config.split(':')
-					csplit[1] = input('%s (%s):'%(csplit[0], csplit[1])) or csplit[1]
+					csplit[1] = input('%s (%s):'%(csplit[0], csplit[1].strip())) or csplit[1].strip()
 					new_configs.append('%s:%s'%(csplit[0], csplit[1]))
 				else:
 					new_configs.append(config)
@@ -73,27 +76,40 @@ def configure_module(module_name, module_type, module_dir):
 
 	# Now configure secrets if there are any
 	try:
-		with open(SECRETS_CONF, 'r') as f:
+		with open(SECRETS_CONF_IN, 'r') as f:
 			configs = f.readlines()
 			configs = [x.strip() for x in configs] 
+
+			print('')
+			print('###################################################')
+			print('############          SECRETS          ############')
+			print('###################################################')
+			print('')
 
 			new_configs = []
 			for config in configs:
 				if not config.startswith('#') and not (config.startswith('[') and config.endswith(']')):
-					# split line by colon and let user set parameter
+					# split line by colon first, equal second, and let user set parameter
 					csplit = config.split(':')
-					csplit[1] = input('%s (%s):'%(csplit[0], csplit[1])) or csplit[1]
+					if len(csplit) < 2:
+						csplit = config.split('=')
+
+					if len(csplit) < 2:
+						csplit[1] = input('%s (no default set):'%(csplit[0]))
+					else:
+						csplit[1] = input('%s (%s):'%(csplit[0], csplit[1].strip())) or csplit[1].strip()
 					new_configs.append('%s:%s'%(csplit[0], csplit[1]))
 				else:
 					new_configs.append(config)
 		f.close()
 
-		with open(SECRETS_CONF, 'w') as f:
+		with open(SECRETS_CONF_OUT, 'w') as f:
 			# write new config values to file
 			f.truncate()
 			for config in new_configs:
 				f.write("%s\n" % config)
 	except Exception as e:
+		print('error opening secrets file: ', e)
 		pass
 
 	print('')
