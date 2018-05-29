@@ -8,6 +8,7 @@ Or through the CLI with `scly start` after installing.
 from simplesensor.shared.collectionPointEvent import CollectionPointEvent
 from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
 from simplesensor.loggingEngine import LoggingEngine
+from simplesensor.shared.event import Event
 from importlib import import_module
 import multiprocessing as mp
 from simplesensor import configLoader
@@ -17,10 +18,9 @@ import time
 import sys
 import os.path
 
-# List of processes to handle
-processes = []
-
-# Dict of threadsafe queues to handle
+# Dict of processes, threadsafe queues to handle
+# Keys will be the module names
+processes = {}
 queues = {}
 
 # Define a single inbound message queue for each of the module types.
@@ -35,7 +35,7 @@ logger = ThreadsafeLogger(queues['logging'], "main")
 
 # Logging output engine
 loggingEngine = LoggingEngine(loggingQueue=queues['logging'])
-processes.append(loggingEngine)
+processes['logging'] = loggingEngine
 loggingEngine.start()
 
 # Config
@@ -116,6 +116,42 @@ for moduleName in _communicationModuleNames:
 
 alive = True
 
+def emit_event(event):
+
+    """ Put outbound event message onto queues of all active communication channel threads,
+    or the modules defined in the recipients field of the message.
+    Always send string messages, as they are control messages like 'SHUTDOWN'.
+    """
+
+    if type(event.recipients) == str: event.recipients = [event.recipients]
+    if event.recipients == ['all']:
+        # Send to all communication channels
+        for moduleName in _communicationModuleNames:
+            try:
+                queues[moduleName]['out'].put_nowait(msg)
+                logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
+            except Exception as e:
+                logger.error('Error adding message to module %s queue: %s'%(moduleName, e))
+
+    elif event.recipients == ['local_only']:
+        # Send to all channels with property `low_cost` set to True
+        for moduleName in _communicationModuleNames:
+            if processes[moduleName].low_cost == True:
+                try:
+                    queues[moduleName]['out'].put_nowait(msg)
+                    logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
+                except Exception as e:
+                    logger.error('Error adding message to %s queue: %s'%(moduleName, e))
+
+    else:
+        # Send to the set recipients
+        for recipient in event.recipients:
+            try:
+                queues[recipient]['out'].put_nowait(msg)
+                logger.debug("%s queue size is %s"%(recipient, queues[recipient]['out'].qsize()))
+            except Exception as e:
+                logger.error('Error adding message to %s queue: %s'%(recipient, e))
+
 def sendOutboundEventMessage(msg, recipients=['all']):
 
     """ Put outbound message onto queues of all active communication channel threads.
@@ -148,7 +184,8 @@ def loadCommunicationChannels():
                                                        queues[moduleName]['out'], 
                                                        queues['comInbound'], 
                                                        queues['logging'])
-            processes.append(proc)
+            print('websocket_server.thing: ', proc.thing)
+            processes[moduleName] = proc
             proc.start()
 
         except Exception as e:
@@ -163,7 +200,7 @@ def loadCollectionPoints():
                                                     queues[moduleName]['out'], 
                                                     queues['cpInbound'], 
                                                     queues['logging'])
-            processes.append(proc)
+            processes[moduleName] = proc
             proc.start()
 
         except Exception as e:
@@ -206,7 +243,7 @@ def main():
                         logger.info("SHUTDOWN handled")
                         shutdown()
                     else:
-                        sendOutboundEventMessage(message, message._recipients)
+                        sendOutboundEventMessage(message)
             except Exception as e:
                 logger.error("Unable to read communication channel queue : %s " %e)
         else:
@@ -222,6 +259,7 @@ def shutdown():
     logger.info("Shutting down main process")
 
     # Send to communication methods
+    event = Event(topic='SHUTDOWN', sender_id='main')
     sendOutboundEventMessage("SHUTDOWN", ['all'])
 
     # Send to collection methods
@@ -239,15 +277,15 @@ def killProcesses():
     """ Wait for each process to die until timeout is reached, then terminate. """
     print('Killing processes...')
     timeout = 5
-    for p in processes:
+    for name, proc in processes.items():
         p_sec = 0
         for second in range(timeout):
-            if p.is_alive():
+            if proc.is_alive():
                 time.sleep(1)
                 p_sec += 1
         if p_sec >= timeout:
-            print('Terminating process %s'%p)
-            p.terminate()
+            print('Terminating process %s - %s'%(name, proc))
+            proc.terminate()
 
 def start():
     """ Main entry point for running on cmd line. """
