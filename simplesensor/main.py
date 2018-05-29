@@ -5,10 +5,9 @@ Can be run with `python main.py`
 Or through the CLI with `scly start` after installing.
 """
 
-from simplesensor.shared.collectionPointEvent import CollectionPointEvent
 from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
 from simplesensor.loggingEngine import LoggingEngine
-from simplesensor.shared.event import Event
+from simplesensor.shared.message import Message
 from importlib import import_module
 import multiprocessing as mp
 from simplesensor import configLoader
@@ -50,6 +49,7 @@ if len(_collectionModuleNames)==0 or len(_communicationModuleNames)==0:
         + 'Use command `scly install --name <some_branch> --type <communication/collection>` '
         + 'to install a module. See https://github.com/AdobeAtAdobe/SimpleSensor/blob/master/README.md'
         + 'for more details.')
+
 _collectionModules = {}
 _communicationModules = {}
 
@@ -78,7 +78,7 @@ def _find_getch():
 
 getch = _find_getch()
 
-def processInput(toexit):
+def process_input(toexit):
     """ Process keystrokes, exit on esc key. """
     ch = getch()
     if ch == b'\x1b':
@@ -86,7 +86,7 @@ def processInput(toexit):
 
 # Set up input thread to watch for esc key
 toExit=[]
-inputThread = Thread(target=processInput, args=(toExit,))
+inputThread = Thread(target=process_input, args=(toExit,))
 inputThread.setDaemon(True)
 inputThread.start()
 
@@ -116,15 +116,15 @@ for moduleName in _communicationModuleNames:
 
 alive = True
 
-def emit_event(event):
+def send_message(message):
 
-    """ Put outbound event message onto queues of all active communication channel threads,
+    """ Put outbound message onto queues of all active communication channel threads,
     or the modules defined in the recipients field of the message.
     Always send string messages, as they are control messages like 'SHUTDOWN'.
     """
 
-    if type(event.recipients) == str: event.recipients = [event.recipients]
-    if event.recipients == ['all']:
+    if type(message.recipients) == str: message.recipients = [message.recipients]
+    if message.recipients == ['all']:
         # Send to all communication channels
         for moduleName in _communicationModuleNames:
             try:
@@ -133,10 +133,10 @@ def emit_event(event):
             except Exception as e:
                 logger.error('Error adding message to module %s queue: %s'%(moduleName, e))
 
-    elif event.recipients == ['local_only']:
+    elif message.recipients == ['local_only']:
         # Send to all channels with property `low_cost` set to True
         for moduleName in _communicationModuleNames:
-            if processes[moduleName].low_cost == True:
+            if processes[moduleName].low_cost() == True:
                 try:
                     queues[moduleName]['out'].put_nowait(msg)
                     logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
@@ -145,36 +145,14 @@ def emit_event(event):
 
     else:
         # Send to the set recipients
-        for recipient in event.recipients:
+        for recipient in message.recipients:
             try:
                 queues[recipient]['out'].put_nowait(msg)
                 logger.debug("%s queue size is %s"%(recipient, queues[recipient]['out'].qsize()))
             except Exception as e:
                 logger.error('Error adding message to %s queue: %s'%(recipient, e))
 
-def sendOutboundEventMessage(msg, recipients=['all']):
-
-    """ Put outbound message onto queues of all active communication channel threads.
-    Always send string messages, as they are control messages like 'shutdown'.
-    """
-    if type(msg) == CollectionPointEvent or recipients == ['all']:
-        # Send to all communication channels
-        for moduleName in _communicationModuleNames:
-            try:
-                if type(msg) is str or not msg._localOnly:
-                    queues[moduleName]['out'].put_nowait(msg)
-                    logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
-            except Exception as e:
-                logger.error('Error adding message to all module queues %s'%e)
-    else:
-        for recipient in recipients:
-            try:
-                queues[recipient]['out'].put_nowait(msg)
-                logger.debug("%s queue size is %s"%(recipient, queues[recipient]['out'].qsize()))
-            except Exception as e:
-                logger.error('Error adding message to queue: %s'%e)
-
-def loadCommunicationChannels():
+def load_communication_channels():
     """ Create a process for each communication channel specified in base.conf """
 
     for moduleName in _communicationModuleNames:
@@ -191,7 +169,7 @@ def loadCommunicationChannels():
         except Exception as e:
             logger.error('Error importing %s: %s'%(moduleName, e))
 
-def loadCollectionPoints():
+def load_collection_points():
     """ Create a new process for each collection point module specified in base.conf """
     for moduleName in _collectionModuleNames:
         try:
@@ -216,10 +194,10 @@ def main():
     """
 
     logger.info('Loading communication channels')
-    loadCommunicationChannels()
+    load_communication_channels()
 
     logger.info("Loading collection points")
-    loadCollectionPoints()
+    load_collection_points()
 
     while alive and not toExit:
         # Listen to inbound message queues for messages
@@ -231,7 +209,7 @@ def main():
                         logger.info("SHUTDOWN handled")
                         shutdown()
                     else:
-                        sendOutboundEventMessage(message)
+                        send_message(message)
             except Exception as e:
                 logger.error("Unable to read collection point queue : %s " %e)
 
@@ -243,7 +221,7 @@ def main():
                         logger.info("SHUTDOWN handled")
                         shutdown()
                     else:
-                        sendOutboundEventMessage(message)
+                        send_message(message)
             except Exception as e:
                 logger.error("Unable to read communication channel queue : %s " %e)
         else:
@@ -260,7 +238,7 @@ def shutdown():
 
     # Send to communication methods
     event = Event(topic='SHUTDOWN', sender_id='main')
-    sendOutboundEventMessage("SHUTDOWN", ['all'])
+    send_message(event)
 
     # Send to collection methods
     for moduleName in _collectionModuleNames:
@@ -268,12 +246,12 @@ def shutdown():
 
     queues['logging'].put_nowait("SHUTDOWN")
 
-    killProcesses()
+    kill_processes()
     alive = False
 
     sys.exit(0)
 
-def killProcesses():
+def kill_processes():
     """ Wait for each process to die until timeout is reached, then terminate. """
     print('Killing processes...')
     timeout = 5
