@@ -10,7 +10,7 @@ from simplesensor.loggingEngine import LoggingEngine
 from simplesensor.shared.message import Message
 from importlib import import_module
 import multiprocessing as mp
-from simplesensor import configLoader
+from simplesensor import mainConfigLoader as configLoader
 from threading import Thread
 import simplesensor
 import time

@@ -3,9 +3,7 @@ LoggingEngine
 Loads logging module config from file, reads logging messages from all threads and outputs them to stdout.
 '''
 from threading import Thread
-import multiprocessing
 import logging
-import logging.config
 import time
 import os.path
 
@@ -20,7 +18,6 @@ class LoggingEngine(Thread):
 
         try:
             conf_path = os.path.join(os.path.dirname(__file__), 'config', 'logging.conf')
-            print('conf path: ', conf_path)
             logging.config.fileConfig(conf_path)
         except Exception as e:
             print('Exception loading logging config: ', e)
