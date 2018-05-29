@@ -44,7 +44,7 @@ class IdsWrapper(object):
         except Exception as e:
             self.logger.error('Failed to load IDS DLL: %s . Are you sure you are using an IDS camera?'%e)
 
-    def isOpened(self):
+    def is_open(self):
         """ Return camera open status"""
         return self.isOpen
     
@@ -57,7 +57,7 @@ class IdsWrapper(object):
         else:
             self.py_bitspixel = value
     
-    def allocateImageMemory(self):
+    def allocate_image_memory(self):
         """ Wrapped call to allocate image memory """
         ret=self.uEyeDll.is_AllocImageMem(self.cam, self.width, self.height, self.bitspixel, byref(self.pcImgMem), byref(self.pid))
         if ret == IS_SUCCESS:
@@ -66,7 +66,7 @@ class IdsWrapper(object):
             self.logger.error('Memory allocation failed, no camera with value ' + str(self.cam.value) + ' | Error code: ' + str(ret))
             return
 
-    def setImageMemory(self):
+    def set_image_memory(self):
         """ Wrapped call to set image memory """
         ret = self.uEyeDll.is_SetImageMem(self.cam, self.pcImgMem, self.pid)
         if ret == IS_SUCCESS:
@@ -75,7 +75,7 @@ class IdsWrapper(object):
             self.logger.error("Failed to set image memory; error code: " + str(ret))
             return
 
-    def beginCapture(self):
+    def begin_capture(self):
         """ Wrapped call to begin capture """
         ret = self.uEyeDll.is_CaptureVideo (self.cam, c_long(IS_DONT_WAIT))  
         if ret == IS_SUCCESS:
@@ -84,11 +84,11 @@ class IdsWrapper(object):
             self.logger.error("Failed to begin video capture; error code: " + str(ret))
             return
 
-    def initImageData(self):
+    def init_image_data(self):
         """ Initialize the ImageData numpy array """
         self.ImageData = np.ones((self.py_height,self.py_width),dtype=np.uint8)
 
-    def setCTypes(self):
+    def set_c_types(self):
         """ Set C Types for width, height, and bitspixel properties"""
         self.width = c_int(self.py_width)
         self.height = c_int(self.py_height) 
@@ -101,7 +101,7 @@ class IdsWrapper(object):
         self.updateThread.start()
         return self
 
-    def initializeCamera(self):
+    def initialize_camera(self):
         """ Wrapped call to initialize camera """
         ret = self.uEyeDll.is_InitCamera(byref(self.cam), self.hWnd)
         if ret == IS_SUCCESS:
@@ -110,7 +110,7 @@ class IdsWrapper(object):
             self.logger.error("Failed to initialize camera; error code: " + str(ret))
             return
 
-    def enableAutoExit(self):
+    def enable_auto_exit(self):
         """ Wrapped call to allow allocated memory to be dropped on exit. """
         ret = self.uEyeDll.is_EnableAutoExit (self.cam, c_uint(1))
         if ret == IS_SUCCESS:
@@ -119,7 +119,7 @@ class IdsWrapper(object):
             self.logger.error("Failed to enable auto exit; error code: " + str(ret))
             return
 
-    def setDisplayMode(self):
+    def set_display_mode(self):
         """ Wrapped call to set display mode to DIB """
         ret = self.uEyeDll.is_SetDisplayMode (self.cam, c_int(IS_SET_DM_DIB))
         if ret == IS_SUCCESS:
@@ -128,7 +128,7 @@ class IdsWrapper(object):
             self.logger.error("Failed to set camera mode; error code: " + str(ret))
             return
 
-    def setColorMode(self):
+    def set_color_mode(self):
         """ Wrapped call to set camera color capture mode """
         ret = self.uEyeDll.is_SetColorMode(self.cam, c_int(IS_CM_SENSOR_RAW8))
         if ret == IS_SUCCESS:
@@ -137,7 +137,7 @@ class IdsWrapper(object):
             self.logger.error("Failed to set color mode; error code: " + str(ret))
             return
     
-    def setCompressionFactor(self):
+    def set_compression_factor(self):
         """ Wrapped call to set image compression factor.
         Required for long USB lengths when bandwidth is constrained, lowers quality.
         """
@@ -148,7 +148,7 @@ class IdsWrapper(object):
             self.logger.error("Failed to set compression factor; error code: " + str(ret))
             return
 
-    def setPixelClock(self):
+    def set_pixel_clock(self):
         """ Wrapped call to set pixel clock.
         Required for long USB lengths when bandwidth is constrained
         Lowers frame rate and increases motion blur. 
@@ -160,7 +160,7 @@ class IdsWrapper(object):
             self.logger.error("Failed to set pixel clock; error code: " + str(ret))
             return
 
-    def setTrigger(self):
+    def set_trigger(self):
         """ Wrapped call to set trigger type to software trigger. """
         ret = self.uEyeDll.is_SetExternalTrigger(self.cam, c_uint(IS_SET_TRIGGER_SOFTWARE))
         if ret == IS_SUCCESS:
@@ -169,7 +169,7 @@ class IdsWrapper(object):
             self.logger.error("Failed to set software trigger; error code: " + str(ret))
             return
 
-    def setImageProfile(self):
+    def set_image_profile(self):
         """ Wrapped call to set image format.
         Sets resolution of the capture to UXGA. More modes available in idsConsts.py.
         """
@@ -185,14 +185,14 @@ class IdsWrapper(object):
         self.cam = c_uint32(0)
         self.hWnd = c_voidp()
         
-        self.initializeCamera()
-        self.enableAutoExit()
-        self.setDisplayMode()
-        self.setColorMode()
-        self.setCompressionFactor()
-        self.setPixelClock()
-        self.setTrigger()
-        self.setImageProfile()
+        self.initialize_camera()
+        self.enable_auto_exit()
+        self.set_display_mode()
+        self.set_color_mode()
+        self.set_compression_factor()
+        self.set_pixel_clock()
+        self.set_trigger()
+        self.set_image_profile()
 
         # Declare video open
         self.isOpen = True

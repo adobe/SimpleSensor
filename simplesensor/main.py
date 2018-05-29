@@ -34,7 +34,6 @@ logger = ThreadsafeLogger(queues['logging'], "main")
 
 # Logging output engine
 loggingEngine = LoggingEngine(loggingQueue=queues['logging'])
-processes['logging'] = loggingEngine
 loggingEngine.start()
 
 # Config
@@ -122,35 +121,37 @@ def send_message(message):
     or the modules defined in the recipients field of the message.
     Always send string messages, as they are control messages like 'SHUTDOWN'.
     """
+    if type(message.recipients) == str: 
+        recipients = [message.recipients]
+    else:
+        recipients = message.recipients
 
-    if type(message.recipients) == str: message.recipients = [message.recipients]
-    if message.recipients == ['all']:
-        # Send to all communication channels
+    if recipients in [['communication_modules'],['all'],['local_only']]:
         for moduleName in _communicationModuleNames:
+            if recipients == ['local_only'] and ~processes[moduleName].low_cost(): break
             try:
-                queues[moduleName]['out'].put_nowait(msg)
+                queues[moduleName]['out'].put_nowait(message)
                 logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
             except Exception as e:
                 logger.error('Error adding message to module %s queue: %s'%(moduleName, e))
 
-    elif message.recipients == ['local_only']:
-        # Send to all channels with property `low_cost` set to True
-        for moduleName in _communicationModuleNames:
-            if processes[moduleName].low_cost() == True:
-                try:
-                    queues[moduleName]['out'].put_nowait(msg)
-                    logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
-                except Exception as e:
-                    logger.error('Error adding message to %s queue: %s'%(moduleName, e))
-
     else:
-        # Send to the set recipients
-        for recipient in message.recipients:
+        # Send to the set recipients only
+        for recipient in recipients:
             try:
-                queues[recipient]['out'].put_nowait(msg)
+                queues[recipient]['out'].put_nowait(message)
                 logger.debug("%s queue size is %s"%(recipient, queues[recipient]['out'].qsize()))
             except Exception as e:
                 logger.error('Error adding message to %s queue: %s'%(recipient, e))
+
+    if recipients in [['collection_modules'],['all'],['local_only']]:
+        for moduleName in _collectionModuleNames:
+            if recipients == ['local_only'] and ~processes[moduleName].low_cost(): break
+            try:
+                queues[moduleName]['out'].put_nowait(message)
+                logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
+            except Exception as e:
+                logger.error('Error adding message to module %s queue: %s'%(moduleName, e))
 
 def load_communication_channels():
     """ Create a process for each communication channel specified in base.conf """
@@ -162,7 +163,6 @@ def load_communication_channels():
                                                        queues[moduleName]['out'], 
                                                        queues['comInbound'], 
                                                        queues['logging'])
-            print('websocket_server.thing: ', proc.thing)
             processes[moduleName] = proc
             proc.start()
 
@@ -205,7 +205,7 @@ def main():
             try:
                 message = queues['cpInbound'].get(block=False, timeout=1)
                 if message is not None:
-                    if message == "SHUTDOWN":
+                    if message.topic.upper() == "SHUTDOWN":
                         logger.info("SHUTDOWN handled")
                         shutdown()
                     else:
@@ -217,7 +217,7 @@ def main():
             try:
                 message = queues['comInbound'].get(block=False, timeout=1)
                 if message is not None:
-                    if message == "SHUTDOWN":
+                    if message.topic.upper() == "SHUTDOWN":
                         logger.info("SHUTDOWN handled")
                         shutdown()
                     else:
@@ -237,14 +237,10 @@ def shutdown():
     logger.info("Shutting down main process")
 
     # Send to communication methods
-    event = Event(topic='SHUTDOWN', sender_id='main')
-    send_message(event)
+    message = Message(topic='SHUTDOWN', sender_id='main', recipients='all')
+    send_message(message)
 
-    # Send to collection methods
-    for moduleName in _collectionModuleNames:
-        queues[moduleName]['out'].put_nowait("SHUTDOWN")
-
-    queues['logging'].put_nowait("SHUTDOWN")
+    queues['logging'].put_nowait(message)
 
     kill_processes()
     alive = False
@@ -254,7 +250,7 @@ def shutdown():
 def kill_processes():
     """ Wait for each process to die until timeout is reached, then terminate. """
     print('Killing processes...')
-    timeout = 5
+    timeout = 2
     for name, proc in processes.items():
         p_sec = 0
         for second in range(timeout):

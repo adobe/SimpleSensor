@@ -5,11 +5,12 @@ Tracks faces as they move, sending only one event per fresh detection.
 Sends reset event when no faces are detected for some time set in config.
 """
 from . import moduleConfigLoader as configLoader
-from simplesensor.shared.collectionPointEvent import CollectionPointEvent
+from simplesensor.shared.message import Message
+from simplesensor.shared.moduleProcess import ModuleProcess
 from .azureImagePredictor import AzureImagePredictor
 from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
 from .multiTracker import MultiTracker
-from multiprocessing import Process
+# from multiprocessing import Process
 from .idsWrapper import IdsWrapper
 from datetime import datetime
 from threading import Thread
@@ -21,14 +22,15 @@ import cv2
 import io
 import os
 
-class CollectionPoint(Process):
+class CollectionPoint(ModuleProcess):
 
     def __init__(self, baseConfig, pInBoundQueue, pOutBoundQueue, loggingQueue):
         """ Initialize new CamCollectionPoint instance.
         Setup queues, variables, configs, predictionEngines, constants and loggers.
         """
 
-        super(CollectionPoint, self).__init__()
+        # ModuleProcess.__init__(self, baseConfig, pInBoundQueue, pOutBoundQueue, loggingQueue)
+        super().__init__(baseConfig, pInBoundQueue, pOutBoundQueue, loggingQueue)
 
         if not self.check_opencv_version("3.", cv2):
             print("OpenCV version {0} is not supported. Use 3.x for best results.".format(self.get_opencv_version()))
@@ -42,7 +44,7 @@ class CollectionPoint(Process):
         self.video = None
         self.needsReset = False
         self.needsResetMux = False
-        self.alive = True
+        self.alive = False
 
         # Configs
         self.moduleConfig = configLoader.load(self.loggingQueue, __name__) #Get the config for this module
@@ -81,12 +83,12 @@ class CollectionPoint(Process):
         You can use this flow, extend it, or build your own.
         """
 
-        # Monitor inbound queue on own thread
-        self.threadProcessQueue = Thread(target=self.processQueue)
-        self.threadProcessQueue.setDaemon(True)
-        self.threadProcessQueue.start()
+        self.alive = True
 
-        self.initializeCamera()
+        # Monitor inbound queue on own thread
+        self.listen()
+
+        self.initialize_camera()
 
         # Load the OpenCV Haar classifier to detect faces
         curdir = os.path.dirname(__file__)
@@ -133,7 +135,7 @@ class CollectionPoint(Process):
             # If no faces in frame, clear tracker and start reset timer
             if len(faces) == 0 or self.mmTracker.length() > self._maximumPeople:
                 self.mmTracker.clear()
-                self.startReset()
+                self.start_reset()
 
             # If there are trackers, update
             if self.mmTracker.length() > 0:
@@ -147,14 +149,14 @@ class CollectionPoint(Process):
 
                 # Optionally add buffer to face, can improve tracking/classification accuracy
                 if self._facePixelBuffer > 0:
-                    (x, y, w, h) = self.applyFaceBuffer(x, y, w, h, self._facePixelBuffer, outputImage.shape)
+                    (x, y, w, h) = self.apply_face_buffer(x, y, w, h, self._facePixelBuffer, outputImage.shape)
 
                 # Get region of interest
                 roi_gray = grayFrame[y:y+h, x:x+w]
                 roi_color = outputImage[y:y+h, x:x+w]
 
                 # If the tracker is valid and doesn't already exist, add it
-                if self.validTracker(x, y, w, h):
+                if self.valid_tracker(x, y, w, h):
                     self.logger.info('Adding tracker')
                     ok = self.mmTracker.add(bbox={'x':x,'y':y,'w':w,'h':h}, frame=outputImage)
 
@@ -165,15 +167,15 @@ class CollectionPoint(Process):
             # If the time since last collection is more than the set threshold
             if not self.needsReset or (time.time() - self.collectionStart > self._collectionThreshold):
                 # Check if the focal face has changed
-                check, face = self.mmTracker.checkFocus()
+                check, face = self.mmTracker.check_focus()
                 if check:
-                    predictions = self.getPredictions(grayFrame, face)
+                    predictions = self.get_predictions(grayFrame, face)
                     if predictions:
-                        self.putCPMessage(data = {
-                            'detectedTime': datetime.now().isoformat('T'),
-                            'predictions': predictions
-                            }, 
-                            type="update")
+                        self.send_message(topic="update",
+                                        data={
+                                            'detectedTime': datetime.now().isoformat('T'),
+                                            'predictions': predictions
+                                         })
                     
             frameCounter += 1
             elapsed = time.time() - start
@@ -188,13 +190,18 @@ class CollectionPoint(Process):
                 cv2.waitKey(1)
 
             if self._sendBlobs and frameCounter%6==0:
-                self.putCPMessage(data = {
+                self.send_message(topic="blob", 
+                                data={
                                     'imageArr': cv2.resize(outputImage, (self._blobWidth, self._blobHeight)) , 
                                     'time': datetime.now().isoformat('T')
-                                    }, 
-                                  type="blob")
+                                })
+                # self.putCPMessage(data = {
+                #                     'imageArr': cv2.resize(outputImage, (self._blobWidth, self._blobHeight)) , 
+                #                     'time': datetime.now().isoformat('T')
+                #                     }, 
+                #                   type="blob")
 
-    def getPredictions(self, grayFrame, face):
+    def get_predictions(self, grayFrame, face):
         """ Send face to predictionEngine as JPEG.
         Return predictions array or false if no face is found. 
         """
@@ -204,12 +211,12 @@ class CollectionPoint(Process):
         buff = io.BytesIO()
         img.save(buff, format="JPEG")
 
-        predictions = self.imagePredictionEngine.getPrediction(buff.getvalue())
+        predictions = self.imagePredictionEngine.get_prediction(buff.getvalue())
         if 'error' in predictions:
             return False
         return predictions
     
-    def validTracker(self, x, y, w, h):
+    def valid_tracker(self, x, y, w, h):
         """ Check if the coordinates are a newly detected face or already present in MultiTracker.
         Only accepts new tracker candidates every _collectionThreshold seconds.
         Return true if the object in those coordinates should be tracked.
@@ -219,7 +226,7 @@ class CollectionPoint(Process):
                 return True
         return False
 
-    def startReset(self):
+    def start_reset(self):
         """Start a timer from reset event.
         If timer completes and the reset event should still be sent, send it.
         """
@@ -230,17 +237,17 @@ class CollectionPoint(Process):
 
         if self.needsReset:
             if (time.time() - self.resetStart) > 10: # 10 seconds after last face detected
-                self.putCPMessage(data=None, type="reset")
+                self.send_message(data=None, type="reset")
                 self.needsReset = False
 
-    def applyFaceBuffer(self, x, y, w, h, b, shape):
+    def apply_face_buffer(self, x, y, w, h, b, shape):
         x = x-b if x-b >= 0 else 0
         y = y-b if y-b >= 0 else 0
         w = w+b if w+b <= shape[1] else shape[1]
         h = h+b if h+b <= shape[0] else shape[0]
         return (x, y, w, h)
 
-    def initializeCamera(self):
+    def initialize_camera(self):
         # Using IDS camera
         if self._useIdsCamera:
             self.logger.info ("Using IDS Camera")
@@ -252,12 +259,12 @@ class CollectionPoint(Process):
             self.wrapper.set('py_bitspixel', self._bitsPerPixel)
 
             # Convert values to ctypes, prep memory locations
-            self.wrapper.setCTypes()
+            self.wrapper.set_c_types()
 
-            self.wrapper.allocateImageMemory()
-            self.wrapper.setImageMemory()
-            self.wrapper.beginCapture()
-            self.wrapper.initImageData()
+            self.wrapper.allocate_image_memory()
+            self.wrapper.set_image_memory()
+            self.wrapper.begin_capture()
+            self.wrapper.init_image_data()
 
             # Start video update thread
             self.video = self.wrapper.start()
@@ -293,38 +300,46 @@ class CollectionPoint(Process):
             else:
                 time.sleep(.25)
 
-    def handleMessage(self, message):
+    def handle_message(self, message):
         if message._topic == 'open-stream':
             self._sendBlobs = True
         elif message._topic == 'close-stream':
             self._sendBlobs = False
-       
-    def putCPMessage(self, data, type):
-        if type == "reset":
+
+    def send_message(self, topic, data=None):
+        message = self.build_message(topic, data)
+        self.put_message(message)
+
+    def build_message(self, topic, data):
+        if topic == "reset":
             # Send reset message
             self.logger.info('Sending reset message')
-            msg = CollectionPointEvent(
-                self._collectionPointId,
-                self._collectionPointType,
-                'Reset mBox',
-                None)
-            self.outQueue.put(msg)
+            msg = Message(
+                topic='reset',
+                sender_id=self._collectionPointId,
+                sender_type=self._collectionPointType,
+                extended_data=None,
+                recipients='communication_modules'
+            )
+            return msg
 
-        elif type == "update":
+        elif topic == "update":
             # Reset collection start and now needs needs reset
             collectionStart = time.time()
             self.needsResetMux = True
 
             self.logger.info('Sending found message')
-            msg = CollectionPointEvent(
-                self._collectionPointId,
-                self._collectionPointType,
-                'Found face',
-                data['predictions']
+            msg = Message(
+                topic='face',
+                sender_id=self._collectionPointId,
+                sender_type=self._collectionPointType,
+                extended_data=data['predictions'],
+                recipients='communication_modules',
+                timestamp=data['detectedTime'],
             )
-            self.outQueue.put(msg)
+            return msg
 
-        elif type == "blob":
+        elif topic == "blob":
             # Get numpy array as bytes
             img = Image.fromarray(data['imageArr'])
             buff = io.BytesIO()
@@ -335,25 +350,69 @@ class CollectionPoint(Process):
             eventExtraData['imageData'] = s
             eventExtraData['dataType'] = 'image/jpeg'
 
-            # Send found message 
-            # self.logger.info('Sending blob message')
-            msg = CollectionPointEvent(
-                self._collectionPointId,
-                self._collectionPointType,
-                'blob',
-                eventExtraData,
-                False
+            msg = Message(
+                topic='blob',
+                sender_id=self._collectionPointId,
+                sender_type=self._collectionPointType,
+                extended_data=eventExtraData,
+                recipients='communication_modules'
             )
-            self.outQueue.put(msg)
+            return msg
+       
+    # def putCPMessage(self, data, type):
+    #     if type == "reset":
+    #         # Send reset message
+    #         self.logger.info('Sending reset message')
+    #         msg = CollectionPointEvent(
+    #             self._collectionPointId,
+    #             self._collectionPointType,
+    #             'Reset mBox',
+    #             None)
+    #         self.outQueue.put(msg)
+
+    #     elif type == "update":
+    #         # Reset collection start and now needs needs reset
+    #         collectionStart = time.time()
+    #         self.needsResetMux = True
+
+    #         self.logger.info('Sending found message')
+    #         msg = CollectionPointEvent(
+    #             self._collectionPointId,
+    #             self._collectionPointType,
+    #             'Found face',
+    #             data['predictions']
+    #         )
+    #         self.outQueue.put(msg)
+
+    #     elif type == "blob":
+    #         # Get numpy array as bytes
+    #         img = Image.fromarray(data['imageArr'])
+    #         buff = io.BytesIO()
+    #         img.save(buff, format="JPEG")
+    #         s = base64.b64encode(buff.getvalue()).decode("utf-8")
+
+    #         eventExtraData = {}
+    #         eventExtraData['imageData'] = s
+    #         eventExtraData['dataType'] = 'image/jpeg'
+
+    #         # Send found message 
+    #         # self.logger.info('Sending blob message')
+    #         msg = CollectionPointEvent(
+    #             self._collectionPointId,
+    #             self._collectionPointType,
+    #             'blob',
+    #             eventExtraData,
+    #             False
+    #         )
+    #         self.outQueue.put(msg)
 
     def shutdown(self):
         self.alive = False
         self.logger.info("Shutting down")
-        # self.outQueue.put("SHUTDOWN")
-        if self._useIdsCamera and self.wrapper.isOpened():
+        if self._useIdsCamera and self.wrapper.is_open():
             self.wrapper.exit()
         cv2.destroyAllWindows()
-        # self.threadProcessQueue.join()
+        self.threadProcessQueue.join()
         time.sleep(1)
         self.exit = True
 

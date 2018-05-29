@@ -61,7 +61,7 @@ class MultiTracker(object):
 		self.trackers.clear()
 		self.focus = None
 
-	def bboxContainsPt(self, bbox, pt, vBuffer):
+	def bbox_contains_pt(self, bbox, pt, vBuffer):
 		""" Check if bbox contains pt. 
 		Optionally provide velocity buffer to spread containing space. 
 		"""
@@ -72,10 +72,10 @@ class MultiTracker(object):
 		else:
 			return False
 
-	def projectedLocationMatches(self, tracker, bbox):
+	def projected_location_matches(self, tracker, bbox):
 		""" Check if the velocity of the tracker could put it in the same spot as the bbox. """
 		if tracker.velocity:
-			return self.bboxContainsPt(bbox, tracker.getProjectedLocation(time()), tracker.getVelocityBuffer())
+			return self.bbox_contains_pt(bbox, tracker.get_projected_location(time()), tracker.get_velocity_buffer())
 		else:
 			return False
 
@@ -98,7 +98,7 @@ class MultiTracker(object):
 
 		for aTracker in self.trackers:
 			if self._useVelocity:
-				if self.intersects(aTracker, bbox) and self.projectedLocationMatches(aTracker, bbox):
+				if self.intersects(aTracker, bbox) and self.projected_location_matches(aTracker, bbox):
 					return True
 			elif self.intersects(aTracker, bbox): return True
 		return False
@@ -107,7 +107,7 @@ class MultiTracker(object):
 		""" Get number of Trackers in the MultiTracker. """
 		return len(self.trackers)
 
-	def getFocus(self):
+	def get_focus(self):
 		""" Get focal object based on primaryTarget configuration.
 		Currently only closest is supported - checks whether there is a tracker
 		that is larger than the previous closest tracker by the configured threshold.
@@ -123,7 +123,7 @@ class MultiTracker(object):
 			for aTracker in self.trackers:
 				# If there's no focus or aTracker is larger than focus, and they aren't the same tracker
 				if not self.focus or (aTracker.area() > area*(1+(self._closestThreshold/100)) 
-					and self.focus.getCreated() != aTracker.getCreated()):
+					and self.focus.get_created() != aTracker.get_created()):
 					focusChanged = True
 					self.focus = aTracker
 					area = aTracker.area()
@@ -140,10 +140,10 @@ class MultiTracker(object):
 			self.logger.error('Primary Target %s is not implemented.'%self._primaryTarget)
 			return None
 
-	def checkFocus(self):
+	def check_focus(self):
 		""" Check if focal Tracker has changed by updating the focus. """
 		
-		focus = self.getFocus()
+		focus = self.get_focus()
 		if focus:
 			return True, focus.bbox
 		else:

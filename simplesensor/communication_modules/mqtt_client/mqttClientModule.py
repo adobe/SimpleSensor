@@ -5,12 +5,12 @@ MQTT client module
 import logging
 import time
 import json
-from threading import Thread
 import paho.mqtt.client as mqtt
 from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
+from simplesensor.shared.moduleProcess import ModuleProcess
 from . import moduleConfigLoader as configLoader
 
-class MQTTClientModule(Thread):
+class MQTTClientModule(ModuleProcess):
     """ Threaded MQTT client for processing and publishing outbound messages"""
 
     def __init__(self, baseConfig, pInBoundEventQueue, pOutBoundEventQueue, loggingQueue):
@@ -35,15 +35,15 @@ class MQTTClientModule(Thread):
         # MQTT setup
         self._client = mqtt.Client()
         self._client.username_pw_set(self._username, self._key)
-        self._client.on_connect    = self.onConnect
-        self._client.on_disconnect = self.onDisconnect
-        self._client.on_message    = self.onMessage
+        self._client.on_connect    = self.on_connect
+        self._client.on_disconnect = self.on_disconnect
+        self._client.on_message    = self.on_message
         self.mqttConnected = False
 
         # Logging setup
         self.logger = ThreadsafeLogger(loggingQueue, "MQTT")
 
-    def onConnect(self, client, userdata, flags, rc):
+    def on_connect(self, client, userdata, flags, rc):
         self.logger.debug('MQTT onConnect called')
         # Result code 0 is success
         if rc == 0:
@@ -54,14 +54,17 @@ class MQTTClientModule(Thread):
             self.logger.error('MQTT failed to connect: %s'%rc)
             raise RuntimeError('MQTT failed to connect: %s'%rc)
 
-    def onDisconnect(self, client, userdata, rc):
+    def on_disconnect(self, client, userdata, rc):
         self.logger.debug('MQTT onDisconnect called')
         self.mqttConnected = False
         if rc != 0:
             self.logger.debug('MQTT disconnected unexpectedly: %s'%rc)
-            self.handleReconnect(rc)
+            self.handle_reconnect(rc)
 
-    def onMessage(self, client, userdata, msg):
+    def handle_reconnect(self, result_code):
+        pass
+
+    def on_message(self, client, userdata, msg):
         self.logger.debug('MQTT onMessage called for client: %s'%client)
 
     def connect(self):
@@ -88,16 +91,16 @@ class MQTTClientModule(Thread):
         if not feed: feed = _feedName
         self._client.publish('{0}/feeds/{1}'.format(self._username, feed), payload=value)
 
-    def publishFaceValues(self, message):
+    def publish_face_values(self, message):
         """ Publish face detection values to individual MQTT feeds
         Parses _extendedData.predictions.faceAttributes property
         """
         try:
-            for face in message._extendedData['predictions']:
+            for face in message.extended_data['predictions']:
                 faceAttrs = face['faceAttributes']
                 for key in faceAttrs:
                     if type(faceAttrs[key]) is dict:
-                        val = self.flattenDict(faceAttrs[key])
+                        val = self.flatten_dict(faceAttrs[key])
                         print('val: ', val)
                     else:
                         val = faceAttrs[key]
@@ -105,7 +108,7 @@ class MQTTClientModule(Thread):
         except Exception as e:
             self.logger.error('Error publishing values: %s'%e)
 
-    def flattenDict(self, aDict):
+    def flatten_dict(self, aDict):
         """ Get average of simple dictionary of numerical values """
         try:
             val = float(sum(aDict[key] for key in aDict)) / len(aDict)
@@ -113,15 +116,14 @@ class MQTTClientModule(Thread):
             self.logger.error('Error flattening dict, returning 0: %s'%e)
         return val or 0
 
-    def publishJsonMessage(self, message):
-        msg_str = self.stringifyMessage(message)
-        self.publish(msg_str)
+    def publish_json_message(self, message):
+        self.publish(message.stringify())
 
-    def stringifyMessage(self, message):
+    def stringify_message(self, message):
         """ Dump into JSON string """
         return json.dumps(message.__dict__).encode('utf8')
 
-    def processQueue(self):
+    def process_queue(self):
         """ Process incoming messages. """
 
         while self.alive:
@@ -131,17 +133,17 @@ class MQTTClientModule(Thread):
                 try:
                     message = self.inQueue.get(block=False,timeout=1)
                     if message is not None and self.mqttConnected:
-                        if message == "SHUTDOWN":
+                        if message.topic.upper() == "SHUTDOWN":
                             self.logger.debug("SHUTDOWN command handled")
                             self.shutdown()
                         else:
                             # Send message as string or split into channels
                             if self._publishJson:
-                                self.publishJsonMessage(message)
+                                self.publish_json_message(message)
                             elif self._publishFaceData:
-                                self.publishFaceValues(message)
+                                self.publish_face_values(message)
                             else:
-                                self.publishValues(message)
+                                self.publish_values(message)
 
                 except Exception as e:
                     self.logger.error("MQTT unable to read queue : %s " %e)
@@ -162,4 +164,4 @@ class MQTTClientModule(Thread):
         self.alive = True
 
         # Start queue loop
-        self.processQueue()
+        self.process_queue()

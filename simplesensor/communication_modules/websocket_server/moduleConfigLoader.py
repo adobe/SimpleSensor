@@ -12,11 +12,11 @@ def load(loggingQueue, name):
     thisConfig = {}
     configParser = configparser.ConfigParser()
 
-    thisConfig = loadSecrets(thisConfig, logger, configParser)
-    thisConfig = loadModule(thisConfig, logger, configParser)
+    thisConfig = load_secrets(thisConfig, logger, configParser)
+    thisConfig = load_module(thisConfig, logger, configParser)
     return thisConfig
 
-def loadSecrets(thisConfig, logger, configParser):
+def load_secrets(thisConfig, logger, configParser):
     """ Load module specific secrets """
     try:
         with open("./config/secrets.conf") as f:
@@ -27,7 +27,7 @@ def loadSecrets(thisConfig, logger, configParser):
 
     return thisConfig
 
-def loadModule(thisConfig, logger, configParser):
+def load_module(thisConfig, logger, configParser):
     """ Load module config """
     try:
         with open("./config/module.conf") as f:

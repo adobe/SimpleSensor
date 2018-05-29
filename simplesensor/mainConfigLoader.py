@@ -15,11 +15,11 @@ def load(loggingQueue, name):
     """ Build dictionary of config values, return it """
     logger = ThreadsafeLogger(loggingQueue, '{0}-{1}'.format(name, 'ConfigLoader'))
 
-    loadBase(logger)
-    # loadSecrets(logger)
+    load_base(logger)
+    # load_secrets(logger)
     return baseConfig
 
-def loadSecrets(logger):
+def load_secrets(logger):
     """ Load secrets.conf into baseConfig"""
     try:
         with open(os.path.join(os.path.dirname(__file__), 'config', 'secrets.conf')) as f:
@@ -30,7 +30,7 @@ def loadSecrets(logger):
         configFilePath = os.path.join(os.path.dirname(__file__),"./config/secrets.conf")
         exit
 
-def loadBase(logger):
+def load_base(logger):
     """ Load base.conf into baseConfig"""
     try:
         with open(os.path.join(os.path.dirname(__file__), 'config', 'base.conf')) as f:

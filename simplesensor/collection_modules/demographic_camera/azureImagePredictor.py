@@ -26,7 +26,7 @@ class AzureImagePredictor(ImagePredictor):
 
         self._headers = {
             'Content-Type': 'application/octet-stream',
-            'Ocp-Apim-Subscription-Key': self.config['Azure']['SubscriptionKey'],
+            'Ocp-Apim-Subscription-Key': self._subscriptionKey,
         }
         self._params = urllib.parse.urlencode({
             "returnFaceId": "true",
@@ -34,7 +34,7 @@ class AzureImagePredictor(ImagePredictor):
             "returnFaceAttributes": "age,gender,glasses,facialHair"
         })
 
-    def getPrediction(self, imageBytes):
+    def get_prediction(self, imageBytes):
         """ Get prediction results from Azure Face API.
         Returns object with either a predictions array property or an error property.
         """
@@ -42,7 +42,7 @@ class AzureImagePredictor(ImagePredictor):
         resultData = {}
 
         try:
-            tempResult = self.__getPrediction(imageBytes)
+            tempResult = self._get_prediction(imageBytes)
             resultData['predictions'] = tempResult
 
         except Exception as e:
@@ -51,7 +51,7 @@ class AzureImagePredictor(ImagePredictor):
 
         return resultData
 
-    def __getPrediction(self,imageBytes):
+    def _get_prediction(self,imageBytes):
         """ Execute REST API call and return result """
 
         if len(self._subscriptionKey) < 10:

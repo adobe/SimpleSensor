@@ -3,7 +3,10 @@ LoggingEngine
 Loads logging module config from file, reads logging messages from all threads and outputs them to stdout.
 '''
 from threading import Thread
+from simplesensor.shared.message import Message
+from multiprocessing import Process
 import logging
+import logging.config
 import time
 import os.path
 
@@ -31,7 +34,7 @@ class LoggingEngine(Thread):
         self.alive = True
  
         #start up the queue read loop thread
-        self.processQueue()
+        self.process_queue()
 
         return
 
@@ -42,14 +45,14 @@ class LoggingEngine(Thread):
         time.sleep(1)
         self.exit = True
 
-    def processQueue(self):
+    def process_queue(self):
         """ Process queue of logger messages """
         while self.alive:
             if (self.queue.empty() == False):
                 try:
                     message = self.queue.get(block=False, timeout=1)
                     if message is not None:
-                        if message == "SHUTDOWN":
+                        if type(message) is Message and message.topic.upper() == "SHUTDOWN":
                             self.logger.debug("SHUTDOWN handled", extra={"loggername":"LoggingEngine"})
                             self.shutdown()
                         else:

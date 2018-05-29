@@ -30,7 +30,7 @@ class Tracker():
 		else:
 			self.logger.error("Type %s not supported by mTracker" % kind)
 
-	def getCreated(self):
+	def get_created(self):
 		""" Get created time """
 		return self.created
 
@@ -76,7 +76,7 @@ class Tracker():
 
 		return ok, bbox
 
-	def getProjectedLocation(self, time):
+	def get_projected_location(self, time):
 		""" Get the estimated location of the bounding box, based on previous velocity. """
 
 		deltaT = max((time - self.updateTime), 1)
@@ -85,7 +85,7 @@ class Tracker():
 		projectedY = centreNow[1]+(self.velocity[1]*deltaT)
 		return (projectedX, projectedY)
 
-	def getVelocityBuffer(self):
+	def get_velocity_buffer(self):
 		''' Another hack to improve low frame rate tracking.
 		"Spread" out the bounding box based on velocity.
 		'''

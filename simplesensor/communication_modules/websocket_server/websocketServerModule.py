@@ -2,24 +2,25 @@
 Websocket server communication module
 """
 
-from multiprocessing import Process
-import time
+from websocket_server import WebsocketServer
+from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
+from simplesensor.shared.message import Message
+from simplesensor.shared.moduleProcess import ModuleProcess
+from . import moduleConfigLoader as configLoader
 from threading import Thread
 import sys
 import json
-from websocket_server import WebsocketServer
-from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
-from simplesensor.shared.collectionPointMessage import CollectionPointMessage
-from . import moduleConfigLoader as configLoader
+import time
 
-class WebsocketServerModule(Process):
-    def __init__(self, baseConfig, pInBoundEventQueue, pOutBoundEventQueue, loggingQueue):
+class WebsocketServerModule(ModuleProcess):
+    def __init__(self, baseConfig, pInBoundQueue, pOutBoundQueue, loggingQueue):
 
-        super(WebsocketServerModule, self).__init__()
-        self.alive = True
+        # super(WebsocketServerModule, self).__init__()
+        ModuleProcess.__init__(self, baseConfig, pInBoundQueue, pOutBoundQueue, loggingQueue)
+        self.alive = False
         self.config = baseConfig
-        self.inQueue = pInBoundEventQueue  # inQueue are messages from the main process to websocket clients
-        self.outQueue = pOutBoundEventQueue  # outQueue are messages from clients to main process
+        self.inQueue = pInBoundQueue  # inQueue are messages from the main process to websocket clients
+        self.outQueue = pOutBoundQueue  # outQueue are messages from clients to main process
         self.websocketServer = None
         self.loggingQueue = loggingQueue
         self.threadProcessQueue = None
@@ -43,36 +44,35 @@ class WebsocketServerModule(Process):
         """
 
         self.logger.info("Starting websocket server")
-
+        self.alive = True
         self.listen()
 
         self.websocketServer = WebsocketServer(self._port, host=self._host)
-        self.websocketServer.set_fn_new_client(self.newWebSocketClient)
-        self.websocketServer.set_fn_message_received(self.websocketMessageReceived)
+        self.websocketServer.set_fn_new_client(self.new_websocket_client)
+        self.websocketServer.set_fn_message_received(self.websocket_message_received)
         self.websocketServer.run_forever()
 
-    def newWebSocketClient(self, client, server):
+    def new_websocket_client(self, client, server):
         """ Client joined callback - called whenever a new client joins. """
 
         self.logger.debug("Client joined")
 
-    def websocketMessageReceived(self, client, server, message):
+    def websocket_message_received(self, client, server, message):
         """ Message received callback - called whenever a new message is received. """
 
         self.logger.debug('Message received: %s'%message)
-        # topic sender recipient extradata localonly
         message = json.loads(message)
-        _msg = CollectionPointMessage(
-            message['data']['_topic'], 
-            message['data']['_sender'], 
-            message['data']['_recipients'], 
-            message['data']['_extraData'], 
-            False)
-        self.outQueue.put_nowait(_msg)
+        _msg = Message(
+            topic=message['data']['topic'], 
+            sender_id=message['data']['sender_id'], 
+            sender_type=message['data']['sender_type'],
+            recipients=message['data']['recipients'], 
+            extended_data=message['data']['extended_data']
+            )
+        self.put_message(_msg)
 
     def listen(self):
-        self.alive = True
-        self.threadProcessQueue = Thread(target=self.processQueue)
+        self.threadProcessQueue = Thread(target=self.process_queue)
         self.threadProcessQueue.setDaemon(True)
         self.threadProcessQueue.start()
 
@@ -103,11 +103,11 @@ class WebsocketServerModule(Process):
         time.sleep(1)
         self.exit = True
 
-    def sendOutMessage(self, message):
+    def handle_message(self, message):
         """ Send message to listening clients. """
         self.websocketServer.send_message_to_all(json.dumps(message.__dict__))
 
-    def processQueue(self):
+    def process_queue(self):
         """ Monitor queue of messages from main process to this thread. """
 
         while self.alive:
@@ -115,11 +115,11 @@ class WebsocketServerModule(Process):
                 try:
                     message = self.inQueue.get(block=False,timeout=1)
                     if message is not None:
-                        if message == "SHUTDOWN":
+                        if message.topic.upper() == "SHUTDOWN":
                             self.logger.debug("SHUTDOWN handled")
                             self.shutdown()
                         else:
-                            self.sendOutMessage(message)
+                            self.handle_message(message)
                 except Exception as e:
                     self.logger.error("Websocket unable to read queue : %s " %e)
             else:
