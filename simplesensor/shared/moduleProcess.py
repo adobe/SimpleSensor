@@ -4,7 +4,7 @@ Abstract class each module extends.
 Implements methods that will always be needed.
 """
 
-from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
+from .threadsafeLogger import ThreadsafeLogger
 from multiprocessing import Process
 import time
 
