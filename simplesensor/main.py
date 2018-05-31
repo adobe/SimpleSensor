@@ -11,6 +11,7 @@ from simplesensor.shared.message import Message
 from importlib import import_module
 import multiprocessing as mp
 from simplesensor import mainConfigLoader as configLoader
+# from simplesensor.shared.configLoader import ConfigLoader
 from threading import Thread
 import simplesensor
 import time
@@ -38,6 +39,15 @@ loggingEngine.start()
 
 # Config
 baseConfig = configLoader.load(queues['logging'], "main")
+
+# WIP - new config loader
+# configLoader = ConfigLoader('main', 
+#     os.path.join(os.path.dirname(__file__), 'config'), 
+#     'base.conf', 
+#     queues['logging']
+#     )
+# baseConfig = configLoader.load()
+# del configLoader
 
 _collectionModuleNames = baseConfig['CollectionModules']
 _communicationModuleNames = baseConfig['CommunicationModules']
