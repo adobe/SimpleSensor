@@ -62,13 +62,18 @@ class WebsocketServerModule(ModuleProcess):
 
         self.logger.debug('Message received: %s'%message)
         message = json.loads(message)
+        self.logger.info("message jsond: %s"%message)
         _msg = Message(
-            topic=message['data']['topic'], 
-            sender_id=message['data']['sender_id'], 
-            sender_type=message['data']['sender_type'],
-            recipients=message['data']['recipients'], 
-            extended_data=message['data']['extended_data']
+            topic=message['topic'], 
+            sender_id=message['sender_id']
             )
+        if 'sender_type' in message: 
+            _msg.sender_type=message['sender_type']
+        if 'recipients' in message: 
+            _msg.recipients=message['recipients']
+        if 'extended_data' in message: 
+            _msg.extended_data=message['extended_data']
+            
         self.put_message(_msg)
 
     def listen(self):
