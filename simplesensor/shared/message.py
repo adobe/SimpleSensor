@@ -9,7 +9,7 @@ import json
 
 class Message(object):
 	
-	def __init__(self, topic, sender_id, sender_type=None, extended_data={}, recipients=['communication_modules'], timestamp=datetime.datetime.utcnow()):
+	def __init__(self, topic, sender_id, sender_type=None, extended_data={}, recipients=['communication_modules'], timestamp=datetime.datetime.now()):
 		"""  
 		topic (required): message type
 		sender_id (required): id property of original sender
@@ -32,7 +32,10 @@ class Message(object):
 
 	def stringify(self):
 		""" Get JSON string dump of the message object. """
-		return json.dumps(self.__dict__)
+		try:
+			return json.dumps(self.__dict__)
+		except Exception as e:
+			print('exception over here fella: ', e)
 
 	def __str__(self):
 		""" Allow 'pretty' printing of Message objects. """
