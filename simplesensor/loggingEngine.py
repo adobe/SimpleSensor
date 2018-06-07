@@ -8,6 +8,7 @@ from multiprocessing import Process
 import logging
 import logging.config
 import time
+import os
 import os.path
 
 class LoggingEngine(Thread):
@@ -25,6 +26,12 @@ class LoggingEngine(Thread):
         except Exception as e:
             print('Exception loading logging config: ', e)
         self.logger = logging.getLogger('main')
+
+        if os.name is 'posix':
+            # set streamhandler terminators on posix systems
+            for handler in self.logger.handlers:
+                if type(handler) is logging.streamhandler:
+                    handler.terminator = '\r\n'
 
     def run(self):
         """ Main thread entry point.

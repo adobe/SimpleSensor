@@ -115,7 +115,7 @@ class MQTTClientModule(ModuleProcess):
         except Exception as e:
             self.logger.error('Error flattening dict, returning 0: %s'%e)
         return val or 0
-
+  
     def publish_json_message(self, message):
         self.publish(message.stringify())
 

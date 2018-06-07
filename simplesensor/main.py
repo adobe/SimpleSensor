@@ -10,19 +10,20 @@ from simplesensor.loggingEngine import LoggingEngine
 from simplesensor.shared.message import Message
 from importlib import import_module
 import multiprocessing as mp
-from simplesensor import mainConfigLoader as configLoader
+from simplesensor import mainConfigLoader as mainConfigLoader
 # from simplesensor.shared.configLoader import ConfigLoader
 from threading import Thread
 import simplesensor
 import time
 import sys
+import os
 import os.path
 
 # Dict of processes, threadsafe queues to handle
 # Keys will be the module names
 processes = {}
 queues = {}
-
+print('here')
 # Define a single inbound message queue for each of the module types.
 # These are shared among modules since the messages should come in order.
 # The main process (main.py) handles forwarding inbound messages to the correct recipient(s).
@@ -38,7 +39,7 @@ loggingEngine = LoggingEngine(loggingQueue=queues['logging'])
 loggingEngine.start()
 
 # Config
-baseConfig = configLoader.load(queues['logging'], "main")
+baseConfig = mainConfigLoader.load(queues['logging'], "main")
 
 # WIP - new config loader
 # configLoader = ConfigLoader('main', 
@@ -141,7 +142,8 @@ def send_message(message):
             if recipients == ['local_only'] and ~processes[moduleName].low_cost(): break
             try:
                 queues[moduleName]['out'].put_nowait(message)
-                logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
+                if os.name is not 'posix':
+                    logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
             except Exception as e:
                 logger.error('Error adding message to module %s queue: %s'%(moduleName, e))
 
@@ -150,7 +152,8 @@ def send_message(message):
         for recipient in recipients:
             try:
                 queues[recipient]['out'].put_nowait(message)
-                logger.debug("%s queue size is %s"%(recipient, queues[recipient]['out'].qsize()))
+                if os.name is not 'posix':
+                    logger.debug("%s queue size is %s"%(recipient, queues[recipient]['out'].qsize()))
             except Exception as e:
                 logger.error('Error adding message to %s queue: %s'%(recipient, e))
 
@@ -159,7 +162,8 @@ def send_message(message):
             if recipients == ['local_only'] and ~processes[moduleName].low_cost(): break
             try:
                 queues[moduleName]['out'].put_nowait(message)
-                logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
+                if os.name is not 'posix':
+                    logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
             except Exception as e:
                 logger.error('Error adding message to module %s queue: %s'%(moduleName, e))
 
@@ -262,6 +266,7 @@ def kill_processes():
     print('Killing processes...')
     timeout = 2
     for name, proc in processes.items():
+        proc.join()
         p_sec = 0
         for second in range(timeout):
             if proc.is_alive():

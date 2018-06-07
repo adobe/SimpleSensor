@@ -23,7 +23,7 @@ setup(
                 'simplesensor.communication_modules.mqtt_client'
                 ],
     package_data= {
-                    'simplesensor': ['config/*.conf'],
+                    'simplesensor': ['config/*.conf', '../logs/*'],
                     'simplesensor.collection_modules.demographic_camera': ['config/*.conf', 'classifiers/haarcascades/*.xml'],
                     'simplesensor.communication_modules.websocket_server': ['config/*.conf'],
                     'simplesensor.communication_modules.mqtt_client': ['config/*.conf']

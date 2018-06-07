@@ -1,6 +1,6 @@
 """ 
 ModuleProcess
-Abstract class each module extends.
+Base class each module extends.
 Implements methods that will always be needed.
 """
 
@@ -8,8 +8,13 @@ from .threadsafeLogger import ThreadsafeLogger
 from multiprocessing import Process
 from threading import Thread
 import time
+import os
+if os.name is 'posix':
+	MODULE_TO_EXTEND = Thread
+else:
+	MODULE_TO_EXTEND = Process
 
-class ModuleProcess(Process):
+class ModuleProcess(MODULE_TO_EXTEND):
 	def __init__(self, baseConfig, pInBoundQueue, pOutBoundQueue, loggingQueue):
 		super(ModuleProcess, self).__init__()
 		self.config = baseConfig
