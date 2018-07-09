@@ -1,3 +1,0 @@
-#base=js
-userPresenceClass.js
-init.js

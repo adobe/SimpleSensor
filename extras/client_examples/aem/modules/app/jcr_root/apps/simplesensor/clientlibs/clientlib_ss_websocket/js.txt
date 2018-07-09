@@ -1,3 +1,0 @@
-#base=js
-websocketClient.js
-init.js

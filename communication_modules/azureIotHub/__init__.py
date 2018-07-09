@@ -1,1 +1,0 @@
-from azureIotHubModule import AzureIotHubModule as CommunicationMethod

@@ -1,0 +1,1 @@
+from simplesensor.communication_modules.mqtt_client.mqttClientModule import MQTTClientModule as CommunicationModule
