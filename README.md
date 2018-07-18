@@ -123,7 +123,7 @@ More details on the CLI can be found in the [CLI readme](./simplesensor/cli/READ
 `recipients` | No | String or list[str] | Module name(s) to which the message will be delivered, ie. "websocket_server". <br> - Use an array of strings to define multiple modules to send to. <br> - Use "all" to send to all available modules. <br> - Use "local_only" to send only to modules with `low_cost` prop set to `True`. <br> - Use "communication_modules" to send only to communication modules. <br> - Use "collection_modules" to send only to collection modules. <br>
 `timestamp`| No | ISO 8601 String | Timestamp of when the message was created
 
-#### Usage
+See also, the [`Message`](./shared/message.py "Message class") class.
 
 
 ## Contributing
