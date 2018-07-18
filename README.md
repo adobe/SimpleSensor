@@ -4,12 +4,13 @@ A modular and threaded Python IoT framework to easily integrate sensors into you
 ## Table of Contents
 
   * [About](#about "About")
-  * [Install](#install "Installation steps")
-  * [Configure](#configure "Configuration steps")
-  * [Documentation](#documentation "Documentation")
     * [Collection Modules](#collection-modules "About collection modules")
     * [Communication Modules](#communication-modules "About communication modules")
     * [Logger](#logger "About logger")
+  * [Setup](#setup "Setup steps")
+  * [Add Modules](#add-modules "Module installation steps")
+  * [Configure](#configure "Configuration steps")
+  * [Documentation](#documentation "Documentation")
     * [Messages](#message-fields "About message structure")
     * [Usage](#usage "Usage")
     * [Contributed Modules](https://github.com/AdobeAtAdobe/SimpleSensor_contrib "contributed modules")
@@ -23,7 +24,7 @@ A modular and threaded Python IoT framework to easily integrate sensors into you
 ## About
 The goal of this project is to make it dead simple to add sensors to your projects. SimpleSensor is modular, you can pick and choose pieces to use from the [contributed modules repo](https://github.com/AdobeAtAdobe/SimpleSensor_contrib) or build your own modules to custom needs. Feel free to contribute back modules, too.
 
-Modules can communicate to one another in chains, or in the simplest case, a collection module will just send messages along a communication module when a certain state/event/etc is detected.
+In a basic use case a collection module can simply send messages along a communication module when a certain state or event is detected in a collection module. You can orchestrate more complicated flows by communicating between modules before sending the message to collection points.
 
 SimpleSensor has the following 3 domains
 1. [Collection modules](#collection-modules "About collection modules")
@@ -32,20 +33,85 @@ SimpleSensor has the following 3 domains
 
 For samples of how to integrate SimpleSensor with clients such as AEM Screens and vanilla Javascript, check out the [samples branch of the contribution repository](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/samples "Contribution repository samples branch").
 
+#### Collection Modules
+Collection modules are used to collect data. They extend the [`ModuleProcess`](./simplesensor/shared/moduleProcess.py "Module process base class") base class and have 3 parts:
 
-## Install
+1. Initialize
+
+Anything that happens before the module's thread is started and it's `run` function is called, as well as any logic inside the `run` function but before starting the main module loop. Here you should initialize the sensor you'll be polling, spawn any additional needed threads, etc.
+
+2. Loop
+
+Poll the sensor, if your condition is met, make a [message](#message-fields "Message fields") instance and put it on the queue with `put_message`.
+
+3. Clean up
+
+Join threads you spawned, clean up the sensor, and mark the module as `alive=False`.
 
 
-## Configure
+#### Communication Modules
+Communication modules are used to send data along one specific communication channel. They extend the same [`ModuleProcess`](./simplesensor/shared/moduleProcess.py "Module process base class") base class as collection modules and also have 3 parts:
+
+1. Initialize
+
+Anything that happens before the module's thread is started and it's `run` function is called, as well as any logic inside the `run` function but before starting the main module loop. Similar to collection modules, you should spawn threads and create instances of classes needed to operate the module and the communication channel. For example, performing handshakes or opening ports.
+
+2. Loop
+
+Poll the `inQueue` for messages to send along the communication channel.
+
+3. Clean up
+
+Close ports, join threads, whatever you need to do to close the communication channel. Then mark the module as `alive=False`.
+
+#### Logger
+The [`ThreadsafeLogger`](./simplesensor/shared/threadsafeLogger.py "Threadsafe logger") is a straightforward facade to add messages to the logging queue. The logging queue is then consumed by the [`LoggingEngine`](./maxed/simplesensor/loggingEngine.py "Logging engine") which passes those formatted messages to the Python logging module.
+
+To configure custom logging parameters, change the [logging config file](./simplesensor/config/logging.conf "Logging config file").
+
+
+## Setup
+There are two ways to use SimpleSensor:
+
+#### Manually
+1. Configure
+
+Configure `/config/base.conf`.
+
+2. Add modules
+
+Write, download, clone modules. Add them to the correct directory. 
+
+3. Configure modules
+
+Configure `/config/module.conf` and, if necessary, `/config/secrets.conf`.
+
+4. Run
+
+`python ./simplesensor/main.py`
+
+#### CLI
+1. Install 
+
+`pip install .` from the same directory as `setup.py`
+
+2. Add modules
+
+`scly install --type <communication or collection> --name <module branch name>`
+
+3. Configure
+
+`scly config --name base`
+
+4. Run
+
+`scly start`
+
+More details on the CLI can be found in the [CLI readme](./simplesensor/cli/README.md "CLI Readme").
 
 
 ## Documentation
 
-#### Collection Modules
-
-#### Communication Modules
-
-#### Logger
 
 #### Message Fields
 **Property**|**Required**|**Type**|**Description**
