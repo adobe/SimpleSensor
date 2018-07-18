@@ -1,4 +1,4 @@
-# SimpleSensor
+# SimpleSensor - DOCS WIP
 A modular and threaded Python IoT framework to easily integrate sensors into your projects.
 
 ## Table of Contents
