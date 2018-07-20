@@ -25,17 +25,25 @@ A modular and threaded Python IoT framework to easily integrate sensors into you
 ## About
 The goal of this project is to make it dead simple to add sensors to your projects. SimpleSensor is modular, you can pick and choose pieces to use from the [contributed modules repo](https://github.com/AdobeAtAdobe/SimpleSensor_contrib) or build your own modules to custom needs. Feel free to contribute back modules, too.
 
-In a basic use case a collection module can simply send messages along a communication module when a certain state or event is detected in a collection module. You can orchestrate more complicated flows by communicating between modules before sending the message to collection points.
+In a basic use case a collection module can simply send messages along a communication module when a certain state or event is detected in a collection module. You can also orchestrate more complicated flows by communicating between modules before sending the message along communication channels.
 
 For samples of how to integrate SimpleSensor with clients such as AEM Screens and vanilla Javascript, check out the [samples branch of the contribution repository](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/samples "Contribution repository samples branch").
 
 ### Modules
 
-Modules are the building blocks of SimpleSensor. They extend the [ModuleProcess](#12-moduleprocess "ModuleProcess class documentation") base class, and have 3 parts:
+Modules are the building blocks of SimpleSensor. They typically have at least 4 parts:
+1. **Main module class**
+2. **Config loader**
+3. **Zero or more config files**
+4. **An \_\_init\_\_.py**, you must import the module class `as CollectionModule` (this is to simplify dynamic module imports)
+
+
+The main module class extends the [ModuleProcess](#12-moduleprocess "ModuleProcess class documentation") base class, and runs on it's own thread or process. The logic of this class can be broken down into 3 stages:
 
 1. **Initialize** :arrow_right: perform any set up needed, either in `__init__()` or in `run()` before you begin the loop.
 2. **Loop** :arrow_right: main logic of the module, repeats until a message is read to shutdown.
 3. **Close** :arrow_right: clean up anything that won't clean itself.
+
 
 #### Collection Modules
 Used to collect data from a sensor, check if that data means something special has occurred, and send a [Message](#11-message "Message class documentation") if it has.
@@ -114,9 +122,13 @@ _class_ simplesensor.shared.message.**Message**(_topic, sender_id, sender_type, 
 #### 1.2. ModuleProcess
 Source: [simplesensor/shared/moduleProcess.py](https://github.com/AdobeAtAdobe/SimpleSensor/blob/maxed/simplesensor/shared/moduleProcess.py "ModuleProcess class source code")
 
-_class_ simplesensor.shared.moduleProcess.**ModuleProcess**
+_class_ simplesensor.shared.moduleProcess.**ModuleProcess**(_baseConfig, pInBoundQueue, pOutBoundQueue, loggingQueue_)
 
-Docs go here
+Base class for modules to inherit. Implements functions that are commonly used, defines the correct queue usage and parameter order.
+
+This should not be instantiated itself, instead you should extend it with your own module and can initialize it in the `__init__()` function with `ModuleProcess.__init__(self, baseConfig, pInBoundQueue, pOutBoundQueue, loggingQueue)`.
+
+For an example of how it can be used, see 
 
 #### 1.3. ThreadsafeLogger
 Source: [simplesensor/shared/threadsafeLogger.py](https://github.com/AdobeAtAdobe/SimpleSensor/blob/maxed/simplesensor/shared/threadsafeLogger.py "ThreadsafeLogger class source code")
