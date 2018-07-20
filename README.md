@@ -4,15 +4,17 @@ A modular and threaded Python IoT framework to easily integrate sensors into you
 ## Table of Contents
 
   * [About](#about "About")
-    * [Collection Modules](#collection-modules "About collection modules")
-    * [Communication Modules](#communication-modules "About communication modules")
+    * [Modules](#modules "About modules")
+      * [Collection modules](#collection-modules "About collection modules")
+      * [Communication modules](#communication-modules "About communication modules")
     * [Logger](#logger "About logger")
   * [Setup](#setup "Setup steps")
   * [Documentation](#documentation "Documentation")
-    * [1.1 Shared](#11-shared "Shared module documentation")
-      * 1.1.1 [Message](#message "Message class documentation")
-      * 1.1.2 [ModuleProcess](#moduleprocess "ModuleProcess class documentation")
-    * [Contributed Modules](https://github.com/AdobeAtAdobe/SimpleSensor_contrib "contributed modules")
+    * [1. Shared](#1-shared "Shared module documentation")
+      * [1.1 Message](#11-message "Message class documentation")
+      * [1.2 ModuleProcess](#12-moduleprocess "ModuleProcess class documentation")
+      * [1.3 ThreadsafeLogger](#13-threadsafelogger "ThreadsafeLogger class documentation")
+    * [Contributed modules](https://github.com/AdobeAtAdobe/SimpleSensor_contrib "contributed modules")
   * [Contributing](#contributing "Contributing")
     * [Issues](#issues "Issues")
     * [Pull requests](#pull-requests "Pull requests")
@@ -32,39 +34,43 @@ SimpleSensor has the following 3 domains
 
 For samples of how to integrate SimpleSensor with clients such as AEM Screens and vanilla Javascript, check out the [samples branch of the contribution repository](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/samples "Contribution repository samples branch").
 
+### Modules
+
+Modules are the building blocks of SimpleSensor. They extend the [ModuleProcess](#12-moduleprocess "ModuleProcess class documentation") base class, and have 3 parts:
+
+1. Initialize :arrow_right: perform any set up needed, either in `__init__()` or in `run()` before you begin the loop
+2. Loop :arrow_right: main logic of the module, repeats until a message is read to shutdown
+3. Close :arrow_right: clean up anything that won't clean itself
+
 #### Collection Modules
-Collection modules are used to collect data. They extend the [`ModuleProcess`](./simplesensor/shared/moduleProcess.py "Module process base class") base class and have 3 parts:
+Used to collect data from a sensor, check if that data means something special has occurred, and send a [Message](#11-message "Message class documentation") if it has.
 
-1. Initialize
+Example modules: [bluetooth (BTLE) beacon](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/btle_beacon "BTLE module"), [demographic camera](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/demographic_camera "demographic camera module")
 
-Anything that happens before the module's thread is started and it's `run` function is called, as well as any logic inside the `run` function but before starting the main module loop. Here you should initialize the sensor you'll be polling, spawn any additional needed threads, etc.
+Examples of modules: [MQTT](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/mqtt_client "MQTT client module"), [websocket server](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/websocket_server "websocket server module"), [websocket client](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/websocket_client "websocket client module")
 
-2. Loop
+1. Initialize :arrow_right: initialize the sensor you'll be polling, set event condition, create variables and spawn threads if needed
 
-Poll the sensor, if your condition is met, make a [message](#message-fields "Message fields") instance and put it on the queue with `put_message`.
+2. Loop :arrow_right: poll the sensor; if the condition is met, make a [Message](#11-message "Message class documentation") instance and put it on the queue with `put_message()`
 
-3. Clean up
-
-Join threads you spawned, clean up the sensor, and mark the module as `alive=False`.
+3. Close :arrow_right: join threads you spawned, clean up the sensor, and mark the module as `alive=False`
 
 
 #### Communication Modules
-Communication modules are used to send data along one specific communication channel. They extend the same [`ModuleProcess`](./simplesensor/shared/moduleProcess.py "Module process base class") base class as collection modules and also have 3 parts:
+Used to send `Messages` along a communication channel. 
 
-1. Initialize
+Examples of modules: [MQTT](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/mqtt_client "MQTT client module"), [websocket server](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/websocket_server "websocket server module"), [websocket client](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/websocket_client "websocket client module")
 
-Anything that happens before the module's thread is started and it's `run` function is called, as well as any logic inside the `run` function but before starting the main module loop. Similar to collection modules, you should spawn threads and create instances of classes needed to operate the module and the communication channel. For example, performing handshakes or opening ports.
+1. Initialize :arrow_right: perform logic needed to operate the communication channel and the module, for example, handshakes or opening ports
 
-2. Loop
+2. Loop :arrow_right: poll the `inQueue` for messages to send along the communication channel
 
-Poll the `inQueue` for messages to send along the communication channel.
-
-3. Clean up
-
-Close ports, join threads, whatever you need to do to close the communication channel. Then mark the module as `alive=False`.
+3. Close :arrow_right: reverse whatever you did in initialize, then mark the module as `alive=False`.
 
 #### Logger
-The [`ThreadsafeLogger`](./simplesensor/shared/threadsafeLogger.py "Threadsafe logger") is a straightforward facade to add messages to the logging queue. The logging queue is then consumed by the [`LoggingEngine`](./maxed/simplesensor/loggingEngine.py "Logging engine") which passes those formatted messages to the Python logging module.
+The [`ThreadsafeLogger`](#13-threadsafelogger "ThreadsafeLogger class documentation") is a straightforward facade to add messages to the logging queue. The logging queue is then consumed by the [`LoggingEngine`](./maxed/simplesensor/loggingEngine.py "Logging engine") which passes those formatted messages to the Python logging module.
+
+The default configuration logs to `stderr`, as well as to a file located in the `<run directory>/logs` directory.
 
 To configure custom logging parameters, change the [logging config file](./simplesensor/config/logging.conf "Logging config file").
 
@@ -95,9 +101,13 @@ More details on the CLI can be found in the [CLI readme](./simplesensor/cli/READ
 
 ## Documentation
 
-### 1.1 Shared
+### 1 Shared
 
-#### 1.1.1 Message
+#### 1.1 Message
+Source: [simplesensor/shared/message.py](https://github.com/AdobeAtAdobe/SimpleSensor/blob/maxed/simplesensor/shared/message.py "Message class source code")
+
+_class_ simplesensor.shared.message.**Message**(_topic, sender_id, sender_type, extended_data, recipients, timestamp_)
+
 **Property**|**Required**|**Type**|**Description**
 --- | -- | -- | --
 `topic`| Yes | String | Message type/topic
@@ -107,11 +117,20 @@ More details on the CLI can be found in the [CLI readme](./simplesensor/cli/READ
 `recipients` | No | String or list[str] | Module name(s) to which the message will be delivered, ie. "websocket_server". <br> - Use an array of strings to define multiple modules to send to. <br> - Use "all" to send to all available modules. <br> - Use "local_only" to send only to modules with `low_cost` prop set to `True`. <br> - Use "communication_modules" to send only to communication modules. <br> - Use "collection_modules" to send only to collection modules. <br>
 `timestamp`| No | ISO 8601 String | Timestamp of when the message was created
 
-See also, the [`Message`](./shared/message.py "Message class") class.
 
-#### 1.1.2 ModuleProcess
+#### 1.2 ModuleProcess
+Source: [simplesensor/shared/moduleProcess.py](https://github.com/AdobeAtAdobe/SimpleSensor/blob/maxed/simplesensor/shared/moduleProcess.py "ModuleProcess class source code")
 
-Stuff here
+_class_ simplesensor.shared.moduleProcess.**ModuleProcess**
+
+Docs go here
+
+#### 1.3 ThreadsafeLogger
+Source: [simplesensor/shared/threadsafeLogger.py](https://github.com/AdobeAtAdobe/SimpleSensor/blob/maxed/simplesensor/shared/threadsafeLogger.py "ThreadsafeLogger class source code")
+
+_class_ simplesensor.shared.threadsafeLogger.**ThreadsafeLogger**(_queue, name_)
+
+Docs go here
 
 
 ## Contributing
