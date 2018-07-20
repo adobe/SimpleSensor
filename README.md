@@ -33,9 +33,9 @@ For samples of how to integrate SimpleSensor with clients such as AEM Screens an
 
 Modules are the building blocks of SimpleSensor. They extend the [ModuleProcess](#12-moduleprocess "ModuleProcess class documentation") base class, and have 3 parts:
 
-1. Initialize :arrow_right: perform any set up needed, either in `__init__()` or in `run()` before you begin the loop
-2. Loop :arrow_right: main logic of the module, repeats until a message is read to shutdown
-3. Close :arrow_right: clean up anything that won't clean itself
+1. **Initialize** :arrow_right: perform any set up needed, either in `__init__()` or in `run()` before you begin the loop
+2. **Loop** :arrow_right: main logic of the module, repeats until a message is read to shutdown
+3. **Close** :arrow_right: clean up anything that won't clean itself
 
 #### Collection Modules
 Used to collect data from a sensor, check if that data means something special has occurred, and send a [Message](#11-message "Message class documentation") if it has.
@@ -44,11 +44,11 @@ Example modules: [bluetooth (BTLE) beacon](https://github.com/AdobeAtAdobe/Simpl
 
 Examples of modules: [MQTT](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/mqtt_client "MQTT client module"), [websocket server](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/websocket_server "websocket server module"), [websocket client](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/websocket_client "websocket client module")
 
-1. Initialize :arrow_right: initialize the sensor you'll be polling, set event condition, create variables and spawn threads if needed
+1. **Initialize** :arrow_right: initialize the sensor you'll be polling, set event condition, create variables and spawn threads if needed
 
-2. Loop :arrow_right: poll the sensor; if the condition is met, make a [Message](#11-message "Message class documentation") instance and put it on the queue with `put_message()`
+2. **Loop** :arrow_right: poll the sensor; if the condition is met, make a [Message](#11-message "Message class documentation") instance and put it on the queue with `put_message()`
 
-3. Close :arrow_right: join threads you spawned, clean up the sensor, and mark the module as `alive=False`
+3. **Close** :arrow_right: join threads you spawned, clean up the sensor, and mark the module as `alive=False`
 
 
 #### Communication Modules
@@ -56,14 +56,14 @@ Used to send `Messages` along a communication channel.
 
 Examples of modules: [MQTT](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/mqtt_client "MQTT client module"), [websocket server](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/websocket_server "websocket server module"), [websocket client](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/websocket_client "websocket client module")
 
-1. Initialize :arrow_right: perform logic needed to operate the communication channel and the module, for example, handshakes or opening ports
+1. **Initialize** :arrow_right: perform logic needed to operate the communication channel and the module, for example, handshakes or opening ports
 
-2. Loop :arrow_right: poll the `inQueue` for messages to send along the communication channel
+2. **Loop** :arrow_right: poll the `inQueue` for messages to send along the communication channel
 
-3. Close :arrow_right: reverse whatever you did in initialize, then mark the module as `alive=False`.
+3. **Close** :arrow_right: reverse whatever you did in initialize, then mark the module as `alive=False`.
 
 #### Logger
-The [`ThreadsafeLogger`](#13-threadsafelogger "ThreadsafeLogger class documentation") is a straightforward facade to add messages to the logging queue. The logging queue is then consumed by the [`LoggingEngine`](./maxed/simplesensor/loggingEngine.py "Logging engine") which passes those formatted messages to the Python logging module.
+The [`ThreadsafeLogger`](#13-threadsafelogger "ThreadsafeLogger class documentation") is a simple facade to add messages to the logging queue, which is an instance of `multiprocessing.Queue` that is shared among all modules. The logging queue is then consumed by the [`LoggingEngine`](./maxed/simplesensor/loggingEngine.py "Logging engine") which passes those formatted messages to the Python logging module.
 
 The default configuration logs to `stderr`, as well as to a file located in the `<run directory>/logs` directory.
 
@@ -74,22 +74,22 @@ To configure custom logging parameters, change the [logging config file](./simpl
 There are two ways to use SimpleSensor:
 
 #### Manually
-1. Configure base  :arrow_right: `/config/base.conf`
+1. **Configure base** :arrow_right: `/config/base.conf`
 
-2. Add modules  :arrow_right: write, download, clone 
+2. **Add modules** :arrow_right: write, download, clone 
 
-3. Configure modules  :arrow_right: `<some module>/config/module.conf` and, if necessary, `<some module>/config/secrets.conf`
+3. **Configure modules** :arrow_right: `<some module>/config/module.conf` and, if necessary, `<some module>/config/secrets.conf`
 
-4. Run  :arrow_right: `python ./simplesensor/main.py`
+4. **Run** :arrow_right: `python ./simplesensor/main.py`
 
 #### CLI
-1. Install  :arrow_right: `pip install .` from the same directory as `setup.py`
+1. **Install** :arrow_right: `pip install .` from the same directory as `setup.py`
 
-2. Add modules  :arrow_right: `scly install --type <communication or collection> --name <module branch name>`
+2. **Add/configure modules** :arrow_right: `scly install --type <communication or collection> --name <module branch name>`
 
-3. Configure base  :arrow_right: `scly config --name base`
+3. **Configure base** :arrow_right: `scly config --name base`
 
-4. Run  :arrow_right: `scly start`
+4. **Run** :arrow_right: `scly start`
 
 More details on the CLI can be found in the [CLI readme](./simplesensor/cli/README.md "CLI Readme").
 
