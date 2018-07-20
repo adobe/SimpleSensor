@@ -11,9 +11,9 @@ A modular and threaded Python IoT framework to easily integrate sensors into you
   * [Setup](#setup "Setup steps")
   * [Documentation](#documentation "Documentation")
     * [1. Shared](#1-shared "Shared module documentation")
-      * [1.1 Message](#11-message "Message class documentation")
-      * [1.2 ModuleProcess](#12-moduleprocess "ModuleProcess class documentation")
-      * [1.3 ThreadsafeLogger](#13-threadsafelogger "ThreadsafeLogger class documentation")
+      * [1.1. Message](#11-message "Message class documentation")
+      * [1.2. ModuleProcess](#12-moduleprocess "ModuleProcess class documentation")
+      * [1.3. ThreadsafeLogger](#13-threadsafelogger "ThreadsafeLogger class documentation")
     * [Contributed modules](https://github.com/AdobeAtAdobe/SimpleSensor_contrib "contributed modules")
   * [Contributing](#contributing "Contributing")
     * [Issues](#issues "Issues")
@@ -33,32 +33,30 @@ For samples of how to integrate SimpleSensor with clients such as AEM Screens an
 
 Modules are the building blocks of SimpleSensor. They extend the [ModuleProcess](#12-moduleprocess "ModuleProcess class documentation") base class, and have 3 parts:
 
-1. **Initialize** :arrow_right: perform any set up needed, either in `__init__()` or in `run()` before you begin the loop
-2. **Loop** :arrow_right: main logic of the module, repeats until a message is read to shutdown
-3. **Close** :arrow_right: clean up anything that won't clean itself
+1. **Initialize** :arrow_right: perform any set up needed, either in `__init__()` or in `run()` before you begin the loop.
+2. **Loop** :arrow_right: main logic of the module, repeats until a message is read to shutdown.
+3. **Close** :arrow_right: clean up anything that won't clean itself.
 
 #### Collection Modules
 Used to collect data from a sensor, check if that data means something special has occurred, and send a [Message](#11-message "Message class documentation") if it has.
 
 Example modules: [bluetooth (BTLE) beacon](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/btle_beacon "BTLE module"), [demographic camera](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/demographic_camera "demographic camera module")
 
-Examples of modules: [MQTT](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/mqtt_client "MQTT client module"), [websocket server](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/websocket_server "websocket server module"), [websocket client](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/websocket_client "websocket client module")
+1. **Initialize** :arrow_right: initialize the sensor you'll be polling, set event condition, create variables and spawn threads if needed.
 
-1. **Initialize** :arrow_right: initialize the sensor you'll be polling, set event condition, create variables and spawn threads if needed
+2. **Loop** :arrow_right: poll the sensor; if the condition is met, make a [Message](#11-message "Message class documentation") instance and put it on the queue with `put_message()`.
 
-2. **Loop** :arrow_right: poll the sensor; if the condition is met, make a [Message](#11-message "Message class documentation") instance and put it on the queue with `put_message()`
-
-3. **Close** :arrow_right: join threads you spawned, clean up the sensor, and mark the module as `alive=False`
+3. **Close** :arrow_right: join threads you spawned, clean up the sensor, and mark the module as `alive=False`.
 
 
 #### Communication Modules
 Used to send `Messages` along a communication channel. 
 
-Examples of modules: [MQTT](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/mqtt_client "MQTT client module"), [websocket server](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/websocket_server "websocket server module"), [websocket client](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/websocket_client "websocket client module")
+Examples modules: [MQTT](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/mqtt_client "MQTT client module"), [websocket server](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/websocket_server "websocket server module"), [websocket client](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/websocket_client "websocket client module")
 
-1. **Initialize** :arrow_right: perform logic needed to operate the communication channel and the module, for example, handshakes or opening ports
+1. **Initialize** :arrow_right: perform logic needed to operate the communication channel and the module, for example, handshakes or opening ports.
 
-2. **Loop** :arrow_right: poll the `inQueue` for messages to send along the communication channel
+2. **Loop** :arrow_right: poll the `inQueue` for messages to send along the communication channel.
 
 3. **Close** :arrow_right: reverse whatever you did in initialize, then mark the module as `alive=False`.
 
@@ -96,9 +94,9 @@ More details on the CLI can be found in the [CLI readme](./simplesensor/cli/READ
 
 ## Documentation
 
-### 1 Shared
+### 1. Shared
 
-#### 1.1 Message
+#### 1.1. Message
 Source: [simplesensor/shared/message.py](https://github.com/AdobeAtAdobe/SimpleSensor/blob/maxed/simplesensor/shared/message.py "Message class source code")
 
 _class_ simplesensor.shared.message.**Message**(_topic, sender_id, sender_type, extended_data, recipients, timestamp_)
@@ -113,14 +111,14 @@ _class_ simplesensor.shared.message.**Message**(_topic, sender_id, sender_type, 
 `timestamp`| No | ISO 8601 String | Timestamp of when the message was created
 
 
-#### 1.2 ModuleProcess
+#### 1.2. ModuleProcess
 Source: [simplesensor/shared/moduleProcess.py](https://github.com/AdobeAtAdobe/SimpleSensor/blob/maxed/simplesensor/shared/moduleProcess.py "ModuleProcess class source code")
 
 _class_ simplesensor.shared.moduleProcess.**ModuleProcess**
 
 Docs go here
 
-#### 1.3 ThreadsafeLogger
+#### 1.3. ThreadsafeLogger
 Source: [simplesensor/shared/threadsafeLogger.py](https://github.com/AdobeAtAdobe/SimpleSensor/blob/maxed/simplesensor/shared/threadsafeLogger.py "ThreadsafeLogger class source code")
 
 _class_ simplesensor.shared.threadsafeLogger.**ThreadsafeLogger**(_queue, name_)
