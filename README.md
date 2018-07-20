@@ -27,11 +27,6 @@ The goal of this project is to make it dead simple to add sensors to your projec
 
 In a basic use case a collection module can simply send messages along a communication module when a certain state or event is detected in a collection module. You can orchestrate more complicated flows by communicating between modules before sending the message to collection points.
 
-SimpleSensor has the following 3 domains
-1. [Collection modules](#collection-modules "About collection modules")
-2. [Communication modules](#communication-modules "About communication modules")
-3. [Logging](#logger "About logger")
-
 For samples of how to integrate SimpleSensor with clients such as AEM Screens and vanilla Javascript, check out the [samples branch of the contribution repository](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/samples "Contribution repository samples branch").
 
 ### Modules
