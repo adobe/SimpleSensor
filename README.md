@@ -8,11 +8,10 @@ A modular and threaded Python IoT framework to easily integrate sensors into you
     * [Communication Modules](#communication-modules "About communication modules")
     * [Logger](#logger "About logger")
   * [Setup](#setup "Setup steps")
-  * [Add Modules](#add-modules "Module installation steps")
-  * [Configure](#configure "Configuration steps")
   * [Documentation](#documentation "Documentation")
-    * [Messages](#message-fields "About message structure")
-    * [Usage](#usage "Usage")
+    * [1.1 Shared](#11-shared "Shared module documentation")
+      * 1.1.1 [Message](#message "Message class documentation")
+      * 1.1.2 [ModuleProcess](#moduleprocess "ModuleProcess class documentation")
     * [Contributed Modules](https://github.com/AdobeAtAdobe/SimpleSensor_contrib "contributed modules")
   * [Contributing](#contributing "Contributing")
     * [Issues](#issues "Issues")
@@ -74,46 +73,31 @@ To configure custom logging parameters, change the [logging config file](./simpl
 There are two ways to use SimpleSensor:
 
 #### Manually
-1. Configure
+1. Configure base  :arrow_right: `/config/base.conf`
 
-Configure `/config/base.conf`.
+2. Add modules  :arrow_right: write, download, clone 
 
-2. Add modules
+3. Configure modules  :arrow_right: `<some module>/config/module.conf` and, if necessary, `<some module>/config/secrets.conf`
 
-Write, download, clone modules. Add them to the correct directory. 
-
-3. Configure modules
-
-Configure `/config/module.conf` and, if necessary, `/config/secrets.conf`.
-
-4. Run
-
-`python ./simplesensor/main.py`
+4. Run  :arrow_right: `python ./simplesensor/main.py`
 
 #### CLI
-1. Install 
+1. Install  :arrow_right: `pip install .` from the same directory as `setup.py`
 
-`pip install .` from the same directory as `setup.py`
+2. Add modules  :arrow_right: `scly install --type <communication or collection> --name <module branch name>`
 
-2. Add modules
+3. Configure base  :arrow_right: `scly config --name base`
 
-`scly install --type <communication or collection> --name <module branch name>`
-
-3. Configure
-
-`scly config --name base`
-
-4. Run
-
-`scly start`
+4. Run  :arrow_right: `scly start`
 
 More details on the CLI can be found in the [CLI readme](./simplesensor/cli/README.md "CLI Readme").
 
 
 ## Documentation
 
+### 1.1 Shared
 
-#### Message Fields
+#### 1.1.1 Message
 **Property**|**Required**|**Type**|**Description**
 --- | -- | -- | --
 `topic`| Yes | String | Message type/topic
@@ -124,6 +108,10 @@ More details on the CLI can be found in the [CLI readme](./simplesensor/cli/READ
 `timestamp`| No | ISO 8601 String | Timestamp of when the message was created
 
 See also, the [`Message`](./shared/message.py "Message class") class.
+
+#### 1.1.2 ModuleProcess
+
+Stuff here
 
 
 ## Contributing
