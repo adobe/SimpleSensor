@@ -1,283 +1,147 @@
-# SimpleSensor
-A Python IoT framework to easily integrate sensors of any kind into your projects.  We also have sample clients for standard web sites and Adobe AEM Screens.
-
+# SimpleSensor - DOCS WIP
+A modular and threaded Python IoT framework to easily integrate sensors into your projects.
 
 ## Table of Contents
 
   * [About](#about "About")
-    * [Communication](#communication-channels "About communication channels")
-    * [Events](#event-structure "About event structure")
-    * [TO DO](#to-do "TO DO list")
-    * [Notes](#notes "Notes")
-  * [Installation](#install "Installation steps")
-  * [Configure](#configure "Configuration steps")
-  * [Examples](#examples "Examples")
-    * [Data collection](#data-collection-examples "Data collection point examples")
-    * [Javascript integration](#javascript-client-examples "Javascript integration examples")
-    * [MQTT](#mqtt-examples "MQTT publishing examples")
-    * [Logging](#logging-examples "Logging examples")
+    * [Modules](#modules "About modules")
+      * [Collection modules](#collection-modules "About collection modules")
+      * [Communication modules](#communication-modules "About communication modules")
+    * [Logger](#logger "About logger")
+  * [Setup](#setup "Setup steps")
+  * [Documentation](#documentation "Documentation")
+    * [1. Shared](#1-shared "Shared module documentation")
+      * [1.1. Message](#11-message "Message class documentation")
+      * [1.2. ModuleProcess](#12-moduleprocess "ModuleProcess class documentation")
+      * [1.3. ThreadsafeLogger](#13-threadsafelogger "ThreadsafeLogger class documentation")
+    * [Contributed modules](https://github.com/AdobeAtAdobe/SimpleSensor_contrib "contributed modules")
   * [Contributing](#contributing "Contributing")
     * [Issues](#issues "Issues")
     * [Pull requests](#pull-requests "Pull requests")
-    * [Coding style](#coding-style "Coding style")
     * [Code of conduct](#code-of-conduct "Code of conduct")
   * [License](./LICENSE "License")
 
 
 ## About
-The number one goal of this effort was to make it dead simple to use sensors.  So, we've isolated and simplified everything other than data collection.  In SimpleSensor's basic use, just collect data and put it in the queue.  Everything else is handled by the other threads, which we have developed for you.  There may be a bit of configuration that needs to be done to turn on and connect to your communication channels, but that’s it.  You could also extend SimpleSensor and add your own modules and communication channels; we'll gladly take pull requests that follow the [contribution guidelines](#contributing "Contributing").
+The goal of this project is to make it dead simple to add sensors to your projects. SimpleSensor is modular, you can pick and choose pieces to use from the [contributed modules repo](https://github.com/AdobeAtAdobe/SimpleSensor_contrib) or build your own modules to custom needs. Feel free to contribute back modules, too.
 
-The application is broken down into the following domains
-1. Communication channels
-2. Logging
-3. Data Collection
+In a basic use case a collection module can simply send messages along a communication module when a certain state or event is detected in a collection module. You can also orchestrate more complicated flows by communicating between modules before sending the message along communication channels.
 
-For examples on how to use these domains, including things you can do with a collection point, an Adobe AEM client, AEM Screens, or plain old Javascipt, see the [Examples](#examples "Examples") section.
+For samples of how to integrate SimpleSensor with clients such as AEM Screens and vanilla Javascript, check out the [samples branch of the contribution repository](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/samples "Contribution repository samples branch").
 
-For printable camera enclosures, see the [enclosures subdirectory](./other/enclosures), and feel free to contribute your own!
+### Modules
 
-#### Communication Channels
-Today we have two communications channels built into the platform.  We will add more over time.
-1. Local websocket
-2. MQTT
-
-_Azure IoT Hub_ is currently under development
-
-#### Event Structure
-CollectionPointEvent |||
---- | -- | --
-**Property**|**Type**|**Description**
-`cpid`| String | Unique ID of the collection point, ie. `FD1` or `123456`
-`cptype`| String | Label of the collection point type, ie. `FaceDetector` or `WaterHeaterMonitor`
-`topic`| String | Label of the event, ie `Detected` or `PowerOn`
-`eventTime`| ISO 8601 String | Time stamp of when the message was created
-`extendedData` | Dictionary | Key/value pairs of any extra data the sensor needs to emit
-`localOnly` | Boolean | Whether or not to broadcast the event on low-cost channels only (placeholder, keep `False` for now)
-  
-
-##### TO DO
-- Greater platform support (stable Linux and macOS installation instructions)
-- Wider range of sensors (taking suggestions, open an [issue!](#contributing "contributing"))
-- Greater camera support
-- Handle `localOnly` flags
-- Target detection zone - specify where in camera feed detections should be triggered using grid system
-- Communication from sensors to SimpleSensor (code is there, events are not handled yet)
-
-##### Notes
-Today we have two support for two types of cameras in our facedetect module:
-- [IDS XS](https://en.ids-imaging.com/store/products/cameras/usb-2-0-cameras/ueye-xs/show/all.html "IDS XS Camera")
-- Standard usb webcams
-
-Currently tested platforms:
-- Windows 10
-- AEM 6.3 w/ AEM Screens
-- Python 3.6 w/ Anaconda
-- OpenCV 3.2
-
-To shutdown, press ESC while the console has focus.
+Modules are the building blocks of SimpleSensor. They typically have at least 4 parts:
+1. **Main module class**
+2. **Config loader**
+3. **Zero or more config files**
+4. **An \_\_init\_\_.py**, you must import the module class `as CollectionModule` (this is to simplify dynamic module imports)
 
 
-## Install
+The main module class extends the [ModuleProcess](#12-moduleprocess "ModuleProcess class documentation") base class, and runs on it's own thread or process. The logic of this class can be broken down into 3 stages:
 
-Get [Anaconda](https://www.anaconda.com/download/ "Download Anaconda"), from command prompt or Anaconda Shell run:
-- `conda create -n ss python=3.6 anaconda`
-- `activate ss` or `source activate ss`
-- `pip install -r requirements.txt`
-
-
-## Configure
-  
-#### Step 1: Configure your base
-###### Open `/config/base.conf` in your favorite text editor, configure as needed:
-Collection Point Params |||
- --- | --- | --- 
- **Property** | **Type** | **Description** 
-`collection_point_id` | String | Becomes the `cpid` property of created `CollectionPointEvents`
-`collection_point_type` | String | Becomes the `cptype` property of created `CollectionPointEvents`
-
-Websocket Params |||
---- | --- | --- 
-**Property** | **Type** | **Description** 
-`websocket_port` | Integer | Port number to use for websocket
-`websocket_host` | String | Host name to use for websocket, ie. `127.0.0.1` or `0.0.0.0` to allow all network machines access
-
-Azure Params |||
- --- | --- | --- 
-**Property** | **Type** | **Description** 
-`azure_message_timeout` | Integer | Time until a message times out
-`azure_timeout` | Integer | Time until Azure connection times out
-`azure_minimum_polling_time` | Integer | Frequency at which to poll for messages
-`azure_device_created` | Boolean | Flag to set whether the client has already been initialized, ie. exists on the Azure Console
-
-MQTT Params |||
- --- | --- | --- 
-**Property** | **Type** | **Description** 
-`mqtt_host` | String | Host name of MQTT broker ie. `io.adafruit.com`
-`mqtt_port` | Integer | Port number of MQTT broker, ie. `1883`
-`mqtt_feed_name` | String | Feed name to publish to
-`mqtt_username` | String | Username to MQTT broker
-`mqtt_keep_alive` | Integer | Maximum period in seconds allowed between communications with the broker. If no other messages are being exchanged, this controls the rate at which the client will send ping messages to the broker.
-`mqtt_publish_json` | Boolean | Flag to publish entire message contents as JSON string
-`mqtt_publish_face_values` | Boolean | Flag to publish only the values of the extended data to respective feeds. 
-**If neither `mqtt_publish_face_values` or `mqtt_publish_json` are enabled** | | Values of the extended data field are published to their own feeds. See [MQTT Examples](#mqtt-examples "MQTT Examples").
-
-**NOTE:** See also [Paho MQTT](https://github.com/eclipse/paho.mqtt.python "Paho MQTT")
-
-Modules |||
- --- | --- | --- 
-**Property** | **Type** | **Description** 
-`collection_modules` | Array | Collection point module folder names to use, ie. `camCollectionPoint`
-`communication_modules` | Array | Communication method folder names to use, ie. `websocketServer`
-
-**NOTE:** These are folder names, not file/class/module names. When adding new modules keep the folder names unique.
-
-Etc |||
- --- | --- | --- 
-**Property** | **Type** | **Description** 
-`test_mode` | Boolean | Flag to allow for debugging workflows
-`slack_channel_webhook_url` | String | Unused for now - for future Slack integration
- 
-#### Step 2: Configure your secrets
-###### Open `/config/secrets.conf.sample` in your favorite text editor, include keys needed by communication methods you wish to use:
-Secrets |||
- --- | --- | --- 
- **Property** | **Type** | **Description** 
-`mqtt_key` | String | API key or password for your MQTT broker account
-`azure_connection_string` | String | Connection string retrieved from your Azure portal
-
-**NOTE:** Save this file as secrets.conf
-
-#### Step 3: Configure your modules
-
-###### Enable/disable packaged modules
-In `config/base.conf`, add/remove the folder names of the modules you wish to use. For example, to use both websocket and MQTT messages, set your `communication_modules` to `["websocketServer", "mqttClient"]`
-
-###### Create your own collection point module:
-1. Duplicate and rename the `/collection_modules/baseCollectionPoint` directory 
-2. Add/replace `collection_modules` array in `config/base.conf` with the name of your new collection point's folder
-3. Write your initialization logic in the `__init__()` function
-4. Write your collection loop logic in the `run()` function
-5. Optionally import constants through a module configuration file, use `camCollectionPoint` as an example
-
-**NOTE:** For details on the included camera/face detection module, see the [module's README](./collection_modules/camCollectionPoint/README.md "camCollectionPoint README")
-  
-
-## Examples
-
-#### Data Collection Examples
-These are some samples of things you can do within the `run()` function of your `collectionPoint.py`
-
-###### Create a CollectionPointEvent:
-```python
-_cpType = 'elite_sensor'
-_cpid = 'sensor_1337'
-_topic = 'Detected'
-_coords = (47.6062, 122.3321)
-_localOnly = False
-msg = (_cpid, _cpType, _topic, extendedData={'location':_coords}, _localOnly)
-```
-
-###### Send an event:
-```python
-self.outQueue.put(msg)
-```
-
-###### Creating a MultiTracker:
-```python
-self.mTracker = MultiTracker("KCF", self.moduleConfig, self.loggingQueue)
-```
-
-###### Adding an tracker to your MultiTracker:
-```python
-ok = self.mmTracker.add(bbox={'x':x,'y':y,'w':w,'h':h}, frame=frame)
-```
-
-#### Javascript Client Examples
-A sample Javascript client connection via websocket can be found [here](other/examples/standalone_web/README.md "Javascript Client Sample")
-
-###### Create a client:
-```javascript
-<div id="displayEventsElement"></div>
-<script src="websocketClient.js" type="text/javascript"></script>
-document.addEventListener("DOMContentLoaded", function(event) {
-  var _displayEventsElement = document.getElementById('displayEventsElement');
-  var cecWebsocketClient = new WebsocketClient("127.0.0.1", 13254); // Connect to localhost at port 13254
-});
-```
-
-###### Listen for messages:
-```javascript
-websocketClient.addEventListener("message", function(eventData){
-  // Do something with the event data
-  displayEventsElement.append(JSON.stringify(eventData));
-});
-```
-
-##### MQTT Examples
-Publishing messages to MQTT requires an MQTT broker ([Adafruit IO](https://learn.adafruit.com/adafruit-io/mqtt-api "Adafruit IO MQTT API"), for example) to be configured and enabled in `/config/base.conf`. There are two ways to publish MQTT messages currently. 
+1. **Initialize** :arrow_right: perform any set up needed, either in `__init__()` or in `run()` before you begin the loop.
+2. **Loop** :arrow_right: main logic of the module, repeats until a message is read to shutdown.
+3. **Close** :arrow_right: clean up anything that won't clean itself.
 
 
-###### Option 1: Publish JSON
-The first method is to publish the entire JSON string dump of the message, if your broker supports it. This is enabled by setting `mqtt_publish_json` to `True` in `/config/base.conf`. The MQTTClient dumps the JSON into utf8 encoding and publishes it like so:
-```python
-_payload = json.dumps(_msg.__dict__).encode('utf8')
-self._client.publish('{0}/feeds/{1}'.format(self._username, _feedName), payload=_payload)
-```
+#### Collection Modules
+Used to collect data from a sensor, check if that data means something special has occurred, and send a [Message](#11-message "Message class documentation") if it has.
 
-###### Option 2: Publish by Key/Value -> Feed/Value
-The second method is to publish the values of each key in the extended data to separate feeds. To use this method, set both `mqtt_send_json` and `mqtt_publish_face_values` to `False` in `/config/base.conf`. The `MQTTClient` will now publish each field of the `extendedData` dictionary message to it's own MQTT feed. 
+Example modules: [bluetooth (BTLE) beacon](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/btle_beacon "BTLE module"), [demographic camera](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/demographic_camera "demographic camera module")
 
-For example, the message created by this code:
-```
-_cpType = 'elite_sensor'
-_cpid = 'sensor_1337'
-_topic = 'Detected'
-_localOnly = False
-_extendedData = {
-    "age": 23,
-    "gender": 0,
-    "glasses": 1,
-    "beard": 0.7
-}
-msg = (_cpid, _cpType, _topic, extendedData=_extendedData, _localOnly)
-```
-Would result in 4 publish events: 
-1. `username/feeds/age` would receive an update value of `23`
-2. `username/feeds/gender` would receive an update value of `0`
-3. `username/feeds/glasses` would receive an update value of `1`
-4. `username/feeds/beard` would receive an update value of `0.7`
+1. **Initialize** :arrow_right: initialize the sensor you'll be polling, set event condition, create variables and spawn threads if needed.
 
-**Note** A modified version of this function is also in `mqttClient.py`, which can be used in conjunction with the Azure Face API (or another prediction engine with the same output structure) and the sample `camCollectionPoint`. It only publishes prediction data, and flattens a dictionary of values to an average.
+2. **Loop** :arrow_right: poll the sensor; if the condition is met, make a [Message](#11-message "Message class documentation") instance and put it on the queue with `put_message()`.
+
+3. **Close** :arrow_right: join threads you spawned, clean up the sensor, and mark the module as `alive=False`.
 
 
-#### Logging Examples
-###### Logging levels:
-```python
-self.logger.info("Starting a thing")
-```
-```python
-self.logger.debug("Made it here!1112")
-```
-```python
-self.logger.warning("This could be bad")
-```
-```python
-self.logger.warn("This also could be bad")
-```
-```python
-self.logger.critical("This *is* bad")
-```
-```python
-self.logger.error("Failed to do the thing: %s"%error)
-```
+#### Communication Modules
+Used to send `Messages` along a communication channel. 
+
+Examples modules: [MQTT](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/mqtt_client "MQTT client module"), [websocket server](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/websocket_server "websocket server module"), [websocket client](https://github.com/AdobeAtAdobe/SimpleSensor_contrib/tree/websocket_client "websocket client module")
+
+1. **Initialize** :arrow_right: perform logic needed to operate the communication channel and the module, for example, handshakes or opening ports.
+
+2. **Loop** :arrow_right: poll the `inQueue` for messages to send along the communication channel.
+
+3. **Close** :arrow_right: reverse whatever you did in initialize, then mark the module as `alive=False`.
+
+#### Logger
+The [`ThreadsafeLogger`](#13-threadsafelogger "ThreadsafeLogger class documentation") is a simple facade to add messages to the logging queue, which is an instance of `multiprocessing.Queue` that is shared among all modules. The logging queue is then consumed by the [`LoggingEngine`](./maxed/simplesensor/loggingEngine.py "Logging engine") which passes those formatted messages to the Python logging module.
+
+The default configuration logs to `stderr`, as well as to a file located in the `<run directory>/logs` directory.
+
+To configure custom logging parameters, change the [logging config file](./simplesensor/config/logging.conf "Logging config file").
+
+
+## Setup
+There are two ways to use SimpleSensor:
+
+#### Manually
+1. **Configure base** :arrow_right: `/config/base.conf`
+
+2. **Add modules** :arrow_right: write, download, clone 
+
+3. **Configure modules** :arrow_right: `<some module>/config/module.conf` and, if necessary, `<some module>/config/secrets.conf`
+
+4. **Run** :arrow_right: `python ./simplesensor/main.py`
+
+#### CLI
+1. **Install** :arrow_right: `pip install .` from the same directory as `setup.py`
+
+2. **Add/configure modules** :arrow_right: `scly install --type <communication or collection> --name <module branch name>`
+
+3. **Configure base** :arrow_right: `scly config --name base`
+
+4. **Run** :arrow_right: `scly start`
+
+More details on the CLI can be found in the [CLI readme](./simplesensor/cli/README.md "CLI Readme").
+
+
+## Documentation
+
+### 1. Shared
+
+#### 1.1. Message
+Source: [simplesensor/shared/message.py](https://github.com/AdobeAtAdobe/SimpleSensor/blob/maxed/simplesensor/shared/message.py "Message class source code")
+
+_class_ simplesensor.shared.message.**Message**(_topic, sender_id, sender_type, extended_data, recipients, timestamp_)
+
+**Property**|**Required**|**Type**|**Description**
+--- | -- | -- | --
+`topic`| Yes | String | Message type/topic
+`sender_id`| Yes | String | ID property of original sender
+`sender_type`| No | String | Type of sender, ie. collection point type, module name, hostname, etc
+`extended_data` | No | Dictionary | Payload to deliver to recipient(s)
+`recipients` | No | String or list[str] | Module name(s) to which the message will be delivered, ie. "websocket_server". <br> - Use an array of strings to define multiple modules to send to. <br> - Use "all" to send to all available modules. <br> - Use "local_only" to send only to modules with `low_cost` prop set to `True`. <br> - Use "communication_modules" to send only to communication modules. <br> - Use "collection_modules" to send only to collection modules. <br>
+`timestamp`| No | ISO 8601 String | Timestamp of when the message was created
+
+
+#### 1.2. ModuleProcess
+Source: [simplesensor/shared/moduleProcess.py](https://github.com/AdobeAtAdobe/SimpleSensor/blob/maxed/simplesensor/shared/moduleProcess.py "ModuleProcess class source code")
+
+_class_ simplesensor.shared.moduleProcess.**ModuleProcess**(_baseConfig, pInBoundQueue, pOutBoundQueue, loggingQueue_)
+
+Base class for modules to inherit. Implements functions that are commonly used, defines the correct queue usage and parameter order.
+
+This should not be instantiated itself, instead you should extend it with your own module and can initialize it in the `__init__()` function with `ModuleProcess.__init__(self, baseConfig, pInBoundQueue, pOutBoundQueue, loggingQueue)`.
+
+For an example of how it can be used, see 
+
+#### 1.3. ThreadsafeLogger
+Source: [simplesensor/shared/threadsafeLogger.py](https://github.com/AdobeAtAdobe/SimpleSensor/blob/maxed/simplesensor/shared/threadsafeLogger.py "ThreadsafeLogger class source code")
+
+_class_ simplesensor.shared.threadsafeLogger.**ThreadsafeLogger**(_queue, name_)
+
+Docs go here
 
 
 ## Contributing
-Make a cool collection module that you want to share?  Or fix up a bug?  Maybe you made SimpleSensor work on a new platform?  We're open for contributions, we just ask that they follow some guidelines to keep things clean and efficient.
+For contributing modules, please check out our [module contribution repo](https://github.com/AdobeAtAdobe/SimpleSensor_contrib)
 
-If you're looking for a place to jump in with contributing, check out our [TO DO](#to-do "TO DO list")
-
-All submissions should come in the form of pull requests and need to be reviewed by project contributors. Read [GitHub's pull request documentation](https://help.github.com/articles/about-pull-requests/) for more information on sending pull requests.
+All submissions should come in the form of pull requests and will be reviewed by project contributors. Read [GitHub's pull request documentation](https://help.github.com/articles/about-pull-requests/) for more information on sending pull requests.
 
 #### Issues
 Issues should either include a proposal for a feature or, in the case of bugs, include the expected behavior, the actual behavior, your environment details, and *ideally* steps to reproduce. They should also *ideally* address actual issues with the code, not issues with setting up the environment. 
@@ -287,18 +151,7 @@ Please follow the [issue template](./ISSUE_TEMPLATE.md) for consistency.
 Pull requests should include references to the title of the issue, and changes proposed in the pull request.
 Please follow the [pull request template](./PULL_REQUEST_TEMPLATE.md) for consistency.
 
-#### Coding Style
-Try to make your code readable first and foremost. 
-Then match the code that surrounds it. 
-Otherwise follow these current styles:
-- mixedCase function/variable/object names
-- mixedCase file and folder names
-- \_mixedCase constant names
-- lowercase\_with\_underscores config file settings, ie. `some_prop = 1337`
-- CamelCase config object variable, ie. `self.config['SomeProp']`
-- docstrings for all functions, ie. `""" Function summary """`
-
 #### Code Of Conduct
-This project adheres to the Adobe [code of conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to FILLINEMAILHERE.
+This project adheres to the Adobe [code of conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
 
 ![AnalyticsImage](https://adobeatadobe.d1.sc.omtrdc.net/b/ss/adbeaaagit/1/H.27.5--NS/0?AQB=1&ndh=1&ce=UTF-8&ns=adobeatadobe&pageName=github%3ASimpleSensor%3Areadme&g=%2FAdobeAtAdobe%2FSimpleSensor&ch=github)
