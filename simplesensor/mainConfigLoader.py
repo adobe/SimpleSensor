@@ -50,6 +50,13 @@ def load_base(logger):
     logger.info("Test mode is set to : %s" % TEST_MODE)
     baseConfig['TestMode'] = TEST_MODE
 
+    """ Default log directory """
+    try:
+        log_dir=configParser.get('BaseConfig','default_log')
+    except:
+        log_dir = "~/simplesensor_logs/app.log"
+    logger.info("Default log directory is set to : %s" % log_dir)
+    baseConfig['DefaultLog'] = log_dir
 
     ################ MODULES ################
 
@@ -57,7 +64,6 @@ def load_base(logger):
         strVal = configParser.get('BaseConfig', 'collection_modules')
         val = json.loads(strVal)
     except Exception as e:
-        print('failed2: ', e)
         strVal = 'camCollectionPoint'
         val = [strVal]
     baseConfig['CollectionModules'] = val
