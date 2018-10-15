@@ -11,7 +11,6 @@ from simplesensor.shared.message import Message
 from importlib import import_module
 import multiprocessing as mp
 from simplesensor import mainConfigLoader as mainConfigLoader
-# from simplesensor.shared.configLoader import ConfigLoader
 from threading import Thread
 import simplesensor
 import time
@@ -23,7 +22,7 @@ import os.path
 # Keys will be the module names
 processes = {}
 queues = {}
-print('here')
+
 # Define a single inbound message queue for each of the module types.
 # These are shared among modules since the messages should come in order.
 # The main process (main.py) handles forwarding inbound messages to the correct recipient(s).
@@ -34,12 +33,15 @@ queues['comInbound']=mp.Queue()
 queues['logging'] = mp.Queue()
 logger = ThreadsafeLogger(queues['logging'], "main")
 
+# Config
+baseConfig = mainConfigLoader.load(queues['logging'], "main")
+
 # Logging output engine
-loggingEngine = LoggingEngine(loggingQueue=queues['logging'])
+loggingEngine = LoggingEngine(loggingQueue=queues['logging'], config=baseConfig)
 loggingEngine.start()
 
 # Config
-baseConfig = mainConfigLoader.load(queues['logging'], "main")
+# baseConfig = mainConfigLoader.load(queues['logging'], "main")
 
 # WIP - new config loader
 # configLoader = ConfigLoader('main', 
