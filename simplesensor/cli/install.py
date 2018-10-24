@@ -1,7 +1,7 @@
 """
 CLI install controller
 """
-from git import Repo
+
 import os, shutil, stat, errno
 from .config import configure_module
 import logging
@@ -9,6 +9,7 @@ import pip
 import time
 
 def install(args):
+	from git import Repo
 	CONTRIB_URL = 'https://github.com/AdobeAtAdobe/SimpleSensor_contrib.git'
 	logger = logging.getLogger(__name__)
 
