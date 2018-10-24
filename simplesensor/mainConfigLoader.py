@@ -23,7 +23,7 @@ def load_secrets(logger):
     """ Load secrets.conf into baseConfig"""
     try:
         with open(os.path.join(os.path.dirname(__file__), 'config', 'secrets.conf')) as f:
-            configParser.read_file(f)
+            configParser.read_file(open(f))
             configFilePath = "/secrets.conf"
     except IOError:
         configParser.read(os.path.join(os.path.dirname(__file__),"./config/secrets.conf"))
@@ -34,7 +34,7 @@ def load_base(logger):
     """ Load base.conf into baseConfig"""
     try:
         with open(os.path.join(os.path.dirname(__file__), 'config', 'base.conf')) as f:
-            configParser.read_file(f)
+            configParser.read_file(open(f))
             configFilePath = "./config/base.conf"
     except Exception as e:
         print('failed: ', e)
