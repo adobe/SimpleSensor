@@ -4,7 +4,10 @@ with open('README.md') as readme_file:
     readme = readme_file.read()
 
 # Dependencies
-required = ['requests==2.14.2', 'gitpython']
+required = [
+    'requests>=2.20.0', 
+    'gitpython'
+]
 
 setup(
     name='SimpleSensor',
