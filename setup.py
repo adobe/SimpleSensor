@@ -5,7 +5,7 @@ with open('README.md') as readme_file:
 
 # Dependencies
 required = [
-    'requests>=2.20.0', 
+    'requests>=2.20', 
     'gitpython'
 ]
 
