@@ -23,10 +23,10 @@ def load_secrets(logger):
     """ Load secrets.conf into baseConfig"""
     try:
         with open(os.path.join(os.path.dirname(__file__), 'config', 'secrets.conf')) as f:
-            configParser.readfp(f)
+            configParser.read_file(f)
             configFilePath = "/secrets.conf"
     except IOError:
-        configParser.read(os.path.join(os.path.dirname(__file__),"./config/secrets.conf"))
+        configParser.read(os.path.join(os.path.dirname(__file__),"./config/secrets.conf"), 'utf8')
         configFilePath = os.path.join(os.path.dirname(__file__),"./config/secrets.conf")
         exit
 
@@ -34,11 +34,11 @@ def load_base(logger):
     """ Load base.conf into baseConfig"""
     try:
         with open(os.path.join(os.path.dirname(__file__), 'config', 'base.conf')) as f:
-            configParser.readfp(f)
+            configParser.read_file(f)
             configFilePath = "./config/base.conf"
     except Exception as e:
-        print('failed: ', e)
-        configParser.read(os.path.join(os.path.dirname(__file__),"./config/base.conf"))
+        print('Error loading base config: ', e)
+        configParser.read(os.path.join(os.path.dirname(__file__),"./config/base.conf"), 'utf8')
         configFilePath = os.path.join(os.path.dirname(__file__),"./config/base.conf")
         exit
 
@@ -50,6 +50,13 @@ def load_base(logger):
     logger.info("Test mode is set to : %s" % TEST_MODE)
     baseConfig['TestMode'] = TEST_MODE
 
+    """ Default log directory """
+    try:
+        log_dir=configParser.get('BaseConfig','default_log')
+    except:
+        log_dir = "~/simplesensor_logs/app.log"
+    logger.info("Default log directory is set to : %s" % log_dir)
+    baseConfig['DefaultLog'] = log_dir
 
     ################ MODULES ################
 
@@ -57,7 +64,6 @@ def load_base(logger):
         strVal = configParser.get('BaseConfig', 'collection_modules')
         val = json.loads(strVal)
     except Exception as e:
-        print('failed2: ', e)
         strVal = 'camCollectionPoint'
         val = [strVal]
     baseConfig['CollectionModules'] = val

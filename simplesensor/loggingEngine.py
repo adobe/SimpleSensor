@@ -13,10 +13,11 @@ import os.path
 
 class LoggingEngine(Thread):
 
-    def __init__(self, loggingQueue):
+    def __init__(self, loggingQueue, config):
 
         super(LoggingEngine, self).__init__()
 
+        self.config = config
         self.alive = True
         self.queue = loggingQueue
 
@@ -30,8 +31,23 @@ class LoggingEngine(Thread):
         if os.name is 'posix':
             # set streamhandler terminators on posix systems
             for handler in self.logger.handlers:
-                if type(handler) is logging.streamhandler:
+                if type(handler) is logging.StreamHandler:
                     handler.terminator = '\r\n'
+
+        # add file handler
+        try:
+            file = os.path.abspath(os.path.expanduser(self.config['DefaultLog']))
+            if not os.path.exists(os.path.dirname(file)):
+                os.makedirs(os.path.dirname(file))
+            fhandler = logging.handlers.RotatingFileHandler(
+                filename=file, 
+                encoding='utf8',
+                maxBytes=10485760,
+                backupCount=5)
+            self.logger.addHandler(fhandler)
+        except Exception as e:
+            print('Exception loading file handler: ', e)
+
 
     def run(self):
         """ Main thread entry point.
