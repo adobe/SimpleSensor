@@ -167,12 +167,15 @@ class MQTTClientModule(ModuleProcess):
         self.exit = True
 
     def run(self):
-        if self.check_ss_version():
-            """ Thread start method"""
-            self.logger.info("Running MQTT")
+       if self.check_ss_version():
+            #cant run with wrong version so we return early
+            return False
 
-            self.connect()
-            self.alive = True
+        """ Thread start method"""
+        self.logger.info("Running MQTT")
 
-            # Start queue loop
-            self.process_queue()
+        self.connect()
+        self.alive = True
+
+        # Start queue loop
+        self.process_queue()

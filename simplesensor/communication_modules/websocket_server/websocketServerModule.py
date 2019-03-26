@@ -39,20 +39,23 @@ class WebsocketServerModule(ModuleProcess):
 
     def run(self):
         if self.check_ss_version():
-            """ Main thread entry point.
+            #cant run with wrong version so we return early
+            return False
+        
+        """ Main thread entry point.
 
-            Sets up websocket server and event callbacks.
-            Starts thread to monitor inbound message queue.
-            """
+        Sets up websocket server and event callbacks.
+        Starts thread to monitor inbound message queue.
+        """
 
-            self.logger.info("Starting websocket server")
-            self.alive = True
-            self.listen()
+        self.logger.info("Starting websocket server")
+        self.alive = True
+        self.listen()
 
-            self.websocketServer = WebsocketServer(self._port, host=self._host)
-            self.websocketServer.set_fn_new_client(self.new_websocket_client)
-            self.websocketServer.set_fn_message_received(self.websocket_message_received)
-            self.websocketServer.run_forever()
+        self.websocketServer = WebsocketServer(self._port, host=self._host)
+        self.websocketServer.set_fn_new_client(self.new_websocket_client)
+        self.websocketServer.set_fn_message_received(self.websocket_message_received)
+        self.websocketServer.run_forever()
 
     def check_ss_version(self):
         #check for min version met

@@ -147,8 +147,9 @@ def send_message(message):
             if recipients == ['local_only'] and ~processes[moduleName].low_cost(): break
             try:
                 queues[moduleName]['out'].put_nowait(message)
-                if os.name is not 'posix':
-                    logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
+                if baseConfig['TestMode']:
+                    if os.name is not 'posix':
+                        logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
             except Exception as e:
                 logger.error('Error adding message to module %s queue: %s'%(moduleName, e))
 
@@ -157,8 +158,10 @@ def send_message(message):
         for recipient in recipients:
             try:
                 queues[recipient]['out'].put_nowait(message)
-                if os.name is not 'posix':
-                    logger.debug("%s queue size is %s"%(recipient, queues[recipient]['out'].qsize()))
+
+                if baseConfig['TestMode']:
+                    if os.name is not 'posix':
+                        logger.debug("%s queue size is %s"%(recipient, queues[recipient]['out'].qsize()))
             except Exception as e:
                 logger.error('Error adding message to %s queue: %s'%(recipient, e))
 
@@ -167,8 +170,10 @@ def send_message(message):
             if recipients == ['local_only'] and ~processes[moduleName].low_cost(): break
             try:
                 queues[moduleName]['out'].put_nowait(message)
-                if os.name is not 'posix':
-                    logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
+
+                if baseConfig['TestMode']:
+                    if os.name is not 'posix':
+                        logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
             except Exception as e:
                 logger.error('Error adding message to module %s queue: %s'%(moduleName, e))
 
