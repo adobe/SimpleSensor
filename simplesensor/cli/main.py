@@ -26,6 +26,9 @@ def get_parser():
     config_parser.add_argument('--name', action='store')
     config_parser.add_argument('--type', action='store')
 
+    version_parser = subparsers.add_parser('version', help='Show running version number')
+    version_parser.set_defaults(func=cli_version)
+
     return parser
 
 def cli_start(args):
@@ -43,5 +46,11 @@ def main():
         args.func(args)
     elif args.command == 'config':
         args.func(args)
+    elif args.command == 'version':
+        args.func(args)
     else:
         parser.print_help()
+
+def cli_version(args):
+    from simplesensor import version
+    print('%s'%(version.__version__))

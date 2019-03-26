@@ -17,6 +17,7 @@ import time
 import sys
 import os
 import os.path
+from .version import __version__
 
 # Dict of processes, threadsafe queues to handle
 # Keys will be the module names
@@ -35,6 +36,8 @@ logger = ThreadsafeLogger(queues['logging'], "main")
 
 # Config
 baseConfig = mainConfigLoader.load(queues['logging'], "main")
+# append main version onto the base config to pass to collection and communication child modules 
+baseConfig['ss_version'] = __version__
 
 # Logging output engine
 loggingEngine = LoggingEngine(loggingQueue=queues['logging'], config=baseConfig)
@@ -288,6 +291,12 @@ def start():
 
     # Set multiprocessing start method
     mp.set_start_method('fork')
+
+"""
+Get the current version number
+"""
+def version():
+    return __version__
 
 if __name__ == '__main__':
     """ Main entry point for running on cmd line. """

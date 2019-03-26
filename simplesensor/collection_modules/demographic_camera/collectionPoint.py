@@ -10,6 +10,8 @@ from simplesensor.shared.moduleProcess import ModuleProcess
 from .azureImagePredictor import AzureImagePredictor
 from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
 from .multiTracker import MultiTracker
+from distutils.version import LooseVersion, StrictVersion
+from .version import __version__
 # from multiprocessing import Process
 from .idsWrapper import IdsWrapper
 from datetime import datetime
@@ -82,124 +84,132 @@ class CollectionPoint(ModuleProcess):
         This function contains various comments along the way to help understand the flow.
         You can use this flow, extend it, or build your own.
         """
+        if self.check_ss_version():
+            self.alive = True
 
-        self.alive = True
+            # Monitor inbound queue on own thread
+            self.listen()
 
-        # Monitor inbound queue on own thread
-        self.listen()
+            self.initialize_camera()
 
-        self.initialize_camera()
+            # Load the OpenCV Haar classifier to detect faces
+            curdir = os.path.dirname(__file__)
+            cascadePath = os.path.join(curdir, 'classifiers','haarcascades','haarcascade_frontalface_default.xml')
+            faceCascade = cv2.CascadeClassifier(cascadePath)
 
-        # Load the OpenCV Haar classifier to detect faces
-        curdir = os.path.dirname(__file__)
-        cascadePath = os.path.join(curdir, 'classifiers','haarcascades','haarcascade_frontalface_default.xml')
-        faceCascade = cv2.CascadeClassifier(cascadePath)
+            self.mmTracker = MultiTracker("KCF", self.moduleConfig, self.loggingQueue)
 
-        self.mmTracker = MultiTracker("KCF", self.moduleConfig, self.loggingQueue)
+            # Setup timer for FPS calculations
+            start = time.time()
+            frameCounter = 1
+            fps = 0
 
-        # Setup timer for FPS calculations
-        start = time.time()
-        frameCounter = 1
-        fps = 0
+            # Start timer for collection events
+            self.collectionStart = time.time()
 
-        # Start timer for collection events
-        self.collectionStart = time.time()
-
-        ok, frame = self.video.read()
-        if not ok:
-            self.logger.error('Cannot read video file')
-            self.shutdown()
-
-        while self.alive:
             ok, frame = self.video.read()
             if not ok:
-                self.logger.error('Error while reading frame')
-                break
+                self.logger.error('Cannot read video file')
+                self.shutdown()
 
-            # Image alts
-            if self._useIdsCamera:
-                grayFrame = frame.copy()
-                outputImage = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
-            else:
-                outputImage = frame.copy()
-                grayFrame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+            while self.alive:
+                ok, frame = self.video.read()
+                if not ok:
+                    self.logger.error('Error while reading frame')
+                    break
 
-            # Detect faces
-            faces = faceCascade.detectMultiScale(
-                grayFrame,
-                scaleFactor = 1.1,
-                minNeighbors = self._minNearestNeighbors,
-                minSize = (self._minFaceWidth, self._minFaceHeight)
-            )
+                # Image alts
+                if self._useIdsCamera:
+                    grayFrame = frame.copy()
+                    outputImage = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
+                else:
+                    outputImage = frame.copy()
+                    grayFrame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
 
-            # If no faces in frame, clear tracker and start reset timer
-            if len(faces) == 0 or self.mmTracker.length() > self._maximumPeople:
-                self.mmTracker.clear()
-                self.start_reset()
+                # Detect faces
+                faces = faceCascade.detectMultiScale(
+                    grayFrame,
+                    scaleFactor = 1.1,
+                    minNeighbors = self._minNearestNeighbors,
+                    minSize = (self._minFaceWidth, self._minFaceHeight)
+                )
 
-            # If there are trackers, update
-            if self.mmTracker.length() > 0:
-                ok, bboxes, failed = self.mmTracker.update(outputImage)
-                if failed:
-                    self.logger.error('Update trackers failed on: %s' % ''.join(str(s) for s in failed))
+                # If no faces in frame, clear tracker and start reset timer
+                if len(faces) == 0 or self.mmTracker.length() > self._maximumPeople:
+                    self.mmTracker.clear()
+                    self.start_reset()
 
-            for (x, y, w, h) in faces:
-                # If faces are detected, engagement exists, do not reset
-                self.needsReset = False
+                # If there are trackers, update
+                if self.mmTracker.length() > 0:
+                    ok, bboxes, failed = self.mmTracker.update(outputImage)
+                    if failed:
+                        self.logger.error('Update trackers failed on: %s' % ''.join(str(s) for s in failed))
 
-                # Optionally add buffer to face, can improve tracking/classification accuracy
-                if self._facePixelBuffer > 0:
-                    (x, y, w, h) = self.apply_face_buffer(x, y, w, h, self._facePixelBuffer, outputImage.shape)
+                for (x, y, w, h) in faces:
+                    # If faces are detected, engagement exists, do not reset
+                    self.needsReset = False
 
-                # Get region of interest
-                roi_gray = grayFrame[y:y+h, x:x+w]
-                roi_color = outputImage[y:y+h, x:x+w]
+                    # Optionally add buffer to face, can improve tracking/classification accuracy
+                    if self._facePixelBuffer > 0:
+                        (x, y, w, h) = self.apply_face_buffer(x, y, w, h, self._facePixelBuffer, outputImage.shape)
 
-                # If the tracker is valid and doesn't already exist, add it
-                if self.valid_tracker(x, y, w, h):
-                    self.logger.info('Adding tracker')
-                    ok = self.mmTracker.add(bbox={'x':x,'y':y,'w':w,'h':h}, frame=outputImage)
+                    # Get region of interest
+                    roi_gray = grayFrame[y:y+h, x:x+w]
+                    roi_color = outputImage[y:y+h, x:x+w]
 
-                # Draw box around face
+                    # If the tracker is valid and doesn't already exist, add it
+                    if self.valid_tracker(x, y, w, h):
+                        self.logger.info('Adding tracker')
+                        ok = self.mmTracker.add(bbox={'x':x,'y':y,'w':w,'h':h}, frame=outputImage)
+
+                    # Draw box around face
+                    if self._showVideoStream:
+                        cv2.rectangle(outputImage, (x, y), (x+w, y+h), (0, 255, 0), 2)
+
+                # If the time since last collection is more than the set threshold
+                if not self.needsReset or (time.time() - self.collectionStart > self._collectionThreshold):
+                    # Check if the focal face has changed
+                    check, face = self.mmTracker.check_focus()
+                    if check:
+                        predictions = self.get_predictions(grayFrame, face)
+                        if predictions:
+                            self.send_message(topic="update",
+                                            data={
+                                                'detectedTime': datetime.now().isoformat('T'),
+                                                'predictions': predictions
+                                            })
+                        
+                frameCounter += 1
+                elapsed = time.time() - start
+                fps = frameCounter/max(abs(elapsed),0.0001)
+                if frameCounter > sys.maxsize:
+                    start = time.time()
+                    frameCounter = 1
+
                 if self._showVideoStream:
-                    cv2.rectangle(outputImage, (x, y), (x+w, y+h), (0, 255, 0), 2)
+                    cv2.putText(outputImage, "%s FPS" % fps, (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1, cv2.LINE_AA)
+                    cv2.imshow("Faces found", outputImage)
+                    cv2.waitKey(1)
 
-            # If the time since last collection is more than the set threshold
-            if not self.needsReset or (time.time() - self.collectionStart > self._collectionThreshold):
-                # Check if the focal face has changed
-                check, face = self.mmTracker.check_focus()
-                if check:
-                    predictions = self.get_predictions(grayFrame, face)
-                    if predictions:
-                        self.send_message(topic="update",
-                                        data={
-                                            'detectedTime': datetime.now().isoformat('T'),
-                                            'predictions': predictions
-                                         })
-                    
-            frameCounter += 1
-            elapsed = time.time() - start
-            fps = frameCounter/max(abs(elapsed),0.0001)
-            if frameCounter > sys.maxsize:
-                start = time.time()
-                frameCounter = 1
+                if self._sendBlobs and frameCounter%6==0:
+                    self.send_message(topic="blob", 
+                                    data={
+                                        'imageArr': cv2.resize(outputImage, (self._blobWidth, self._blobHeight)) , 
+                                        'time': datetime.now().isoformat('T')
+                                    })
+                    # self.putCPMessage(data = {
+                    #                     'imageArr': cv2.resize(outputImage, (self._blobWidth, self._blobHeight)) , 
+                    #                     'time': datetime.now().isoformat('T')
+                    #                     }, 
+                    #                   type="blob")
 
-            if self._showVideoStream:
-                cv2.putText(outputImage, "%s FPS" % fps, (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1, cv2.LINE_AA)
-                cv2.imshow("Faces found", outputImage)
-                cv2.waitKey(1)
-
-            if self._sendBlobs and frameCounter%6==0:
-                self.send_message(topic="blob", 
-                                data={
-                                    'imageArr': cv2.resize(outputImage, (self._blobWidth, self._blobHeight)) , 
-                                    'time': datetime.now().isoformat('T')
-                                })
-                # self.putCPMessage(data = {
-                #                     'imageArr': cv2.resize(outputImage, (self._blobWidth, self._blobHeight)) , 
-                #                     'time': datetime.now().isoformat('T')
-                #                     }, 
-                #                   type="blob")
+    def check_ss_version(self):
+        #check for min version met
+        self.logger.info('Module version %s' %(__version__))
+        if LooseVersion(self.config['ss_version']) < LooseVersion(self.moduleConfig['MinSimpleSensorVersion']):
+            self.logger.error('This module requires a min SimpleSensor %s version.  This instance is running version %s' %(self.moduleConfig['MinSimpleSensorVersion'],self.config['ss_version']))
+            return False
+        return True
 
     def get_predictions(self, grayFrame, face):
         """ Send face to predictionEngine as JPEG.

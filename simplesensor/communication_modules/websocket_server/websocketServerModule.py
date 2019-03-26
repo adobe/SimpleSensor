@@ -6,6 +6,8 @@ from websocket_server import WebsocketServer
 from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
 from simplesensor.shared.message import Message
 from simplesensor.shared.moduleProcess import ModuleProcess
+from distutils.version import LooseVersion, StrictVersion
+from .version import __version__
 from . import moduleConfigLoader as configLoader
 from threading import Thread
 import sys
@@ -36,21 +38,29 @@ class WebsocketServerModule(ModuleProcess):
         self.logger = ThreadsafeLogger(loggingQueue, __name__)
 
     def run(self):
+        if self.check_ss_version():
+            """ Main thread entry point.
 
-        """ Main thread entry point.
+            Sets up websocket server and event callbacks.
+            Starts thread to monitor inbound message queue.
+            """
 
-        Sets up websocket server and event callbacks.
-        Starts thread to monitor inbound message queue.
-        """
+            self.logger.info("Starting websocket server")
+            self.alive = True
+            self.listen()
 
-        self.logger.info("Starting websocket server")
-        self.alive = True
-        self.listen()
+            self.websocketServer = WebsocketServer(self._port, host=self._host)
+            self.websocketServer.set_fn_new_client(self.new_websocket_client)
+            self.websocketServer.set_fn_message_received(self.websocket_message_received)
+            self.websocketServer.run_forever()
 
-        self.websocketServer = WebsocketServer(self._port, host=self._host)
-        self.websocketServer.set_fn_new_client(self.new_websocket_client)
-        self.websocketServer.set_fn_message_received(self.websocket_message_received)
-        self.websocketServer.run_forever()
+    def check_ss_version(self):
+        #check for min version met
+        self.logger.info('Module version %s' %(__version__))
+        if LooseVersion(self.config['ss_version']) < LooseVersion(self.moduleConfig['MinSimpleSensorVersion']):
+            self.logger.error('This module requires a min SimpleSensor %s version.  This instance is running version %s' %(self.moduleConfig['MinSimpleSensorVersion'],self.config['ss_version']))
+            return False
+        return True
 
     def new_websocket_client(self, client, server):
         """ Client joined callback - called whenever a new client joins. """
