@@ -167,7 +167,7 @@ class MQTTClientModule(ModuleProcess):
         self.exit = True
 
     def run(self):
-       if self.check_ss_version():
+       if not self.check_ss_version():
             #cant run with wrong version so we return early
             return False
 

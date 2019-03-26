@@ -84,7 +84,7 @@ class CollectionPoint(ModuleProcess):
         This function contains various comments along the way to help understand the flow.
         You can use this flow, extend it, or build your own.
         """
-        if self.check_ss_version():
+        if not self.check_ss_version():
             #cant run with wrong version so we return early
             return False
         

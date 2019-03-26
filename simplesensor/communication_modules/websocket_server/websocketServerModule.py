@@ -38,7 +38,7 @@ class WebsocketServerModule(ModuleProcess):
         self.logger = ThreadsafeLogger(loggingQueue, __name__)
 
     def run(self):
-        if self.check_ss_version():
+        if not self.check_ss_version():
             #cant run with wrong version so we return early
             return False
         
