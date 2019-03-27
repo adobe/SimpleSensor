@@ -7,8 +7,10 @@ import time
 import json
 import paho.mqtt.client as mqtt
 from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
+from distutils.version import LooseVersion, StrictVersion
 from simplesensor.shared.moduleProcess import ModuleProcess
 from . import moduleConfigLoader as configLoader
+from .version import __version__
 
 class MQTTClientModule(ModuleProcess):
     """ Threaded MQTT client for processing and publishing outbound messages"""
@@ -42,6 +44,14 @@ class MQTTClientModule(ModuleProcess):
 
         # Logging setup
         self.logger = ThreadsafeLogger(loggingQueue, "MQTT")
+
+    def check_ss_version(self):
+        #check for min version met
+        self.logger.info('Module version %s' %(__version__))
+        if LooseVersion(self.config['ss_version']) < LooseVersion(self.moduleConfig['MinSimpleSensorVersion']):
+            self.logger.error('This module requires a min SimpleSensor %s version.  This instance is running version %s' %(self.moduleConfig['MinSimpleSensorVersion'],self.config['ss_version']))
+            return False
+        return True
 
     def on_connect(self, client, userdata, flags, rc):
         self.logger.debug('MQTT onConnect called')
@@ -157,6 +167,10 @@ class MQTTClientModule(ModuleProcess):
         self.exit = True
 
     def run(self):
+       if not self.check_ss_version():
+            #cant run with wrong version so we return early
+            return False
+
         """ Thread start method"""
         self.logger.info("Running MQTT")
 

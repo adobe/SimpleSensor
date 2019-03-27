@@ -10,6 +10,8 @@ from simplesensor.shared.moduleProcess import ModuleProcess
 from .azureImagePredictor import AzureImagePredictor
 from simplesensor.shared.threadsafeLogger import ThreadsafeLogger
 from .multiTracker import MultiTracker
+from distutils.version import LooseVersion, StrictVersion
+from .version import __version__
 # from multiprocessing import Process
 from .idsWrapper import IdsWrapper
 from datetime import datetime
@@ -82,7 +84,10 @@ class CollectionPoint(ModuleProcess):
         This function contains various comments along the way to help understand the flow.
         You can use this flow, extend it, or build your own.
         """
-
+        if not self.check_ss_version():
+            #cant run with wrong version so we return early
+            return False
+        
         self.alive = True
 
         # Monitor inbound queue on own thread
@@ -175,7 +180,7 @@ class CollectionPoint(ModuleProcess):
                                         data={
                                             'detectedTime': datetime.now().isoformat('T'),
                                             'predictions': predictions
-                                         })
+                                        })
                     
             frameCounter += 1
             elapsed = time.time() - start
@@ -200,6 +205,14 @@ class CollectionPoint(ModuleProcess):
                 #                     'time': datetime.now().isoformat('T')
                 #                     }, 
                 #                   type="blob")
+
+    def check_ss_version(self):
+        #check for min version met
+        self.logger.info('Module version %s' %(__version__))
+        if LooseVersion(self.config['ss_version']) < LooseVersion(self.moduleConfig['MinSimpleSensorVersion']):
+            self.logger.error('This module requires a min SimpleSensor %s version.  This instance is running version %s' %(self.moduleConfig['MinSimpleSensorVersion'],self.config['ss_version']))
+            return False
+        return True
 
     def get_predictions(self, grayFrame, face):
         """ Send face to predictionEngine as JPEG.

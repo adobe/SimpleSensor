@@ -1,4 +1,5 @@
 from setuptools import setup
+exec(open('simplesensor/version.py').read())
 
 with open('README.md') as readme_file:
     readme = readme_file.read()
@@ -11,7 +12,7 @@ required = [
 
 setup(
     name='SimpleSensor',
-    version='0.1.0',
+    version=__version__,
     description='A Python IoT framework for simple sensor integration',
     long_description=readme,
     author='',

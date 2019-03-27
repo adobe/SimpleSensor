@@ -17,6 +17,7 @@ import time
 import sys
 import os
 import os.path
+from .version import __version__
 
 # Dict of processes, threadsafe queues to handle
 # Keys will be the module names
@@ -35,6 +36,8 @@ logger = ThreadsafeLogger(queues['logging'], "main")
 
 # Config
 baseConfig = mainConfigLoader.load(queues['logging'], "main")
+# append main version onto the base config to pass to collection and communication child modules 
+baseConfig['ss_version'] = __version__
 
 # Logging output engine
 loggingEngine = LoggingEngine(loggingQueue=queues['logging'], config=baseConfig)
@@ -144,8 +147,9 @@ def send_message(message):
             if recipients == ['local_only'] and ~processes[moduleName].low_cost(): break
             try:
                 queues[moduleName]['out'].put_nowait(message)
-                if os.name is not 'posix':
-                    logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
+                if baseConfig['TestMode']:
+                    if os.name is not 'posix':
+                        logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
             except Exception as e:
                 logger.error('Error adding message to module %s queue: %s'%(moduleName, e))
 
@@ -154,8 +158,10 @@ def send_message(message):
         for recipient in recipients:
             try:
                 queues[recipient]['out'].put_nowait(message)
-                if os.name is not 'posix':
-                    logger.debug("%s queue size is %s"%(recipient, queues[recipient]['out'].qsize()))
+
+                if baseConfig['TestMode']:
+                    if os.name is not 'posix':
+                        logger.debug("%s queue size is %s"%(recipient, queues[recipient]['out'].qsize()))
             except Exception as e:
                 logger.error('Error adding message to %s queue: %s'%(recipient, e))
 
@@ -164,8 +170,10 @@ def send_message(message):
             if recipients == ['local_only'] and ~processes[moduleName].low_cost(): break
             try:
                 queues[moduleName]['out'].put_nowait(message)
-                if os.name is not 'posix':
-                    logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
+
+                if baseConfig['TestMode']:
+                    if os.name is not 'posix':
+                        logger.debug("%s queue size is %s"%(moduleName, queues[moduleName]['out'].qsize()))
             except Exception as e:
                 logger.error('Error adding message to module %s queue: %s'%(moduleName, e))
 
@@ -288,6 +296,12 @@ def start():
 
     # Set multiprocessing start method
     mp.set_start_method('fork')
+
+"""
+Get the current version number
+"""
+def version():
+    return __version__
 
 if __name__ == '__main__':
     """ Main entry point for running on cmd line. """

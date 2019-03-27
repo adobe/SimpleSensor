@@ -92,4 +92,21 @@ def load_module(thisConfig, logger, configParser):
     logger.info("MQTT publish JSON : %s" % configValue)
     thisConfig['MqttPublishJson'] = configValue
 
+    """min simple sensor version"""
+    try:
+        configValue=configParser.get('ModuleConfig','min_ss_version')
+    except:
+        logger.eror("Min SimpleSensor verion was not defined")
+        configValue = "99999.9999.9"
+    logger.info("Min SimpleSensor verion : %s" % configValue)
+    thisConfig['MinSimpleSensorVersion'] = configValue
+
+    """module tested versions"""
+    try:
+        configValue=list(filter(None, [x.strip() for x in configParser.get('ModuleConfig','ss_tested_versions').splitlines()]))
+    except:
+        configValue = ""
+    logger.info("Module tested SimpleSensor verions : %s" % configValue)
+    thisConfig['SimpleSensorTestedVersions'] = configValue
+
     return thisConfig
