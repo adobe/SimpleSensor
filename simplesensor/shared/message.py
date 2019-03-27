@@ -6,6 +6,7 @@ channels to forward them along to external listeners."""
 
 import datetime
 import json
+from simplesensor.version import __version__
 
 class Message(object):
 	
@@ -28,6 +29,7 @@ class Message(object):
 		self.sender_type = sender_type
 		self.extended_data = extended_data
 		self.recipients = recipients
+		self.ssvn = __version__
 		self.timestamp='{0}'.format(timestamp)
 
 	def stringify(self):
@@ -40,45 +42,3 @@ class Message(object):
 	def __str__(self):
 		""" Allow 'pretty' printing of Message objects. """
 		return json.dumps(self.__dict__)
-		
-	# @property
-	# def topic(self):
-	# 	return self._topic
-	# @topic.setter
-	# def topic(self, value):
-	# 	self._topic = value
-
-	# @property
-	# def sender_id(self):
-	# 	return self._sender_id
-	# @sender_id.setter
-	# def sender_id(self, value):
-	# 	self._sender_id = value
-
-	# @property
-	# def sender_type(self):
-	# 	return self._sender_type
-	# @sender_type.setter
-	# def sender_type(self, value):
-	# 	self._sender_type = value
-
-	# @property
-	# def extended_data(self):
-	# 	return self._extended_data
-	# @extended_data.setter
-	# def extended_data(self, value):
-	# 	self._extended_data = value
-
-	# @property
-	# def recipients(self):
-	# 	return self._recipients
-	# @recipients.setter
-	# def recipients(self, value):
-	# 	self._recipients = value
-
-	# @property
-	# def timestamp(self):
-	# 	return self._timestamp
-	# @timestamp.setter
-	# def timestamp(self, value):
-	# 	self._timestamp = value
