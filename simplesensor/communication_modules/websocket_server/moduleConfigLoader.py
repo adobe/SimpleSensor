@@ -56,7 +56,7 @@ def load_module(thisConfig, logger, configParser):
     try:
         configValue=configParser.get('ModuleConfig','min_ss_version')
     except:
-        logger.eror("Min SimpleSensor verion was not defined")
+        logger.error("Min SimpleSensor verion was not defined")
         configValue = "99999.9999.9"
     logger.info("Min SimpleSensor verion : %s" % configValue)
     thisConfig['MinSimpleSensorVersion'] = configValue
